@@ -126,24 +126,37 @@ def calcularRendimento(unidadeAcabado, quantidade):
 
 somaProdutosEventos = []
 
+def mudarUnidade(unidade):
+    if unidade == 'GR':
+        return 'KG'
+    elif unidade == 'ML':
+        return 'LT'
+    else:
+        return unidade
+
 def alterarStringUnidade(unidade):
     if '\x00' in unidade:
         unidadeCorrigida = unidade.replace('\x00', '')
         return unidadeCorrigida
     else:
         return unidade
+    
+    
 
 def converterKg(produto):
-    if produto['unidade'] == "GR":
+    if str(produto['unidade']) == "GR" or str(produto['unidade']) == "ML":
         return produto['totalProducao'] / 1000
     else:
         return produto['totalProducao']
+    
+
 
 def somarProdutosEvento():
     df = pd.DataFrame(produtosComposicao)
 
-    df['unidade'] = alterarStringUnidade(df['unidadeComposicao'])
-    df['totalProducao'] = converterKg(df.to_json())
+    df['unidade'] = df['unidadeComposicao'].apply(alterarStringUnidade)
+    df['unidade'] = df['unidade'].apply(mudarUnidade)
+    df['totalProducao'] = df.apply(converterKg, axis=1)
     result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'unidade'])[['totalProducao']].sum().reset_index()
 
     gerarArquivoExcel(result)
