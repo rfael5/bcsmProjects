@@ -14,8 +14,6 @@ conexao = (
 
 engine = create_engine(conexao, pool_pre_ping=True)
 
-#queryTotalAcabados = """"""
-
 queryProdutosComposicao =  """
 select 
 	 e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DTEVENTO as dataEvento, p.PK_MOVTOPED as idMovtoped, p.DESCRICAO as nomeProdutoAcabado, p.UNIDADE as unidadeAcabado, a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento 
@@ -24,51 +22,38 @@ from TPAPRODCOMPOSICAO as a
 	inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
 	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED 
 where e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'Z'
 or e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'B'
 or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'V'
 or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'B'
 order by p.DESCRICAO
 """
-
-# queryProdutosAcabados = """
-# select a.PK_PRODUTO as idProduto, a.DESCRICAO nomeProduto, sum(p.L_QUANTIDADE) as qtdTotal, p.UNIDADE as unidade from TPAPRODUTO as a 
-# 	inner join TPAMOVTOPED as p on a.PK_PRODUTO = p.IDX_PRODUTO
-# 	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
-# where a.IDX_NEGOCIO = 'Produtos acabados'
-# 	and e.DTEVENTO between '20240115' and '20240117'
-# 	and e.SITUACAO = 'V'
-# 	and e.TPDOCTO = 'OR'
-# group by a.PK_PRODUTO, a.DESCRICAO, p.UNIDADE
-# order by nomeProduto
-# """
-
 
 queryProdutosAcabados = """
 select a.PK_PRODUTO as idProduto, p.PK_MOVTOPED as idMovtoped, p.DESCRICAO as nomeProduto, sum(p.L_QUANTIDADE) as qtdTotal, p.UNIDADE as unidade from TPAPRODUTO as a 
 	inner join TPAMOVTOPED as p on a.PK_PRODUTO = p.IDX_PRODUTO
 	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
 where e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'Z' 
 	and a.IDX_NEGOCIO = 'Produtos acabados'
 or e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'B' 
 	and a.IDX_NEGOCIO = 'Produtos acabados'
 or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'V' 
 	and a.IDX_NEGOCIO = 'Produtos acabados'
 or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20231201' and '20231231'
+	and e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'B' 
 	and a.IDX_NEGOCIO = 'Produtos acabados'
 group by a.PK_PRODUTO, p.PK_MOVTOPED, p.DESCRICAO, p.UNIDADE
@@ -82,7 +67,7 @@ from TPAPRODCOMPOSICAO as a
 	inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
 	inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
 	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED 
-where e.DTPREVISAO between '20231201' and '20231231'
+where e.DTPREVISAO between '20231201' and '20240101'
 	and e.SITUACAO = 'V'
 	and e.TPDOCTO = 'OR'
 group by c.PK_PRODUTO, c.DESCRICAO, a.UN
@@ -105,10 +90,6 @@ def verificarAjustes(evento):
     resultado = receberDados(queryAjustes)
     if len(resultado) > 0:
         evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + resultado[0]['qtdAlteracao']
-    
-    #print(resultado[0]["qtdAlteracao"])
-    #print(evento['qtdProdutoEvento'])
-    #print(resultado)
 
 
 def recuperarHoraAtual():
@@ -117,29 +98,16 @@ def recuperarHoraAtual():
     data_hora_formatada = data_hora_atual.strftime(formato)
     return data_hora_formatada
 
-# def somarProdutosEvento():
-#     df = pd.DataFrame(produtosComposicao)
-
-#     df['unidade'] = alterarStringUnidade(df['unidadeComposicao'])
-#     result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'unidade'])[['totalProducao']].sum().reset_index()
-
-#     gerarArquivoExcel(result)
-
-
 def calcularQtdProducao():
-    df = pd.DataFrame(produtosComposicao)
-    verificarAjustes(df)
+    for e in produtosComposicao:
+        verificarAjustes(e)
+        if e['unidadeAcabado'] == 'PP':
+            total = e["qtdProdutoComposicao"] * (e["qtdProdutoEvento"] / 10)
+            e["totalProducao"] = total
+        else:
+            total = e["qtdProdutoComposicao"] * e["qtdProdutoEvento"]
+            e["totalProducao"] = total
 
-
-# def calcularQtdProducao():
-#     for e in produtosComposicao:
-#         verificarAjustes(e)
-#         if e['unidadeAcabado'] == 'PP':
-#             total = e["qtdProdutoComposicao"] * (e["qtdProdutoEvento"] / 10)
-#             e["totalProducao"] = total
-#         else:
-#             total = e["qtdProdutoComposicao"] * e["qtdProdutoEvento"]
-#             e["totalProducao"] = total
 
 calcularQtdProducao()
 
@@ -165,15 +133,20 @@ def alterarStringUnidade(unidade):
     else:
         return unidade
 
+def converterKg(produto):
+    if produto['unidade'] == "GR":
+        return produto['totalProducao'] / 1000
+    else:
+        return produto['totalProducao']
+
 def somarProdutosEvento():
     df = pd.DataFrame(produtosComposicao)
 
     df['unidade'] = alterarStringUnidade(df['unidadeComposicao'])
+    df['totalProducao'] = converterKg(df.to_json())
     result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'unidade'])[['totalProducao']].sum().reset_index()
 
     gerarArquivoExcel(result)
-
-
 
 # def somarProdutosEvento():
 #     copiaListaProdutos = produtosComposicao
@@ -207,30 +180,6 @@ def somarProdutosEvento():
 #     # for p in listaOrdenada:
 #     #     print(f"----{p}")
 #     gerarArquivoExcel(listaTotais)
-    
 
 
 somarProdutosEvento()
-
-
-# for p in totalProdutosEvento:
-#     print(f"----{p}")
-
-
-# for e in produtosComposicao:
-#     if e['nomeProdutoComposicao'] == 'Coco Ralado Seco pct 10kg':
-#         print(f"----{e}")
-
-
-
-# for e in produtosComposicao:
-#     if 'totalProducao' not in e:
-#         print(e)
-
-# for e in produtosComposicao:
-#     if e['idProdutoAcabado'] == '1833':
-#         print(e)
-    # try:
-    #     print(f"----{e['totalProducao']}")
-    # except KeyError:
-    #     print(f'----{e}')

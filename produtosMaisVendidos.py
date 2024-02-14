@@ -22,19 +22,19 @@ queryMaisVendidos = """SELECT V.PK_MOVTOPED as idMovtoped, V.IDX_PRODUTO AS idPr
 	INNER JOIN TPADOCTOPED AS E ON V.RDX_DOCTOPED = PK_DOCTOPED
 	INNER JOIN TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
 WHERE E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20230101' AND '20240101'
+	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'Z'
 OR E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20230101' AND '20240101'
+	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20230101' AND '20240101'
+	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'V'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20230101' AND '20240101'
+	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 ORDER BY V.DESCRICAO
@@ -46,19 +46,19 @@ select A.IDX_MOVTOPED AS idMovtoped, V.IDX_PRODUTO AS idProduto, V.DESCRICAO AS 
 	inner join TPADOCTOPED AS E ON V.RDX_DOCTOPED = E.PK_DOCTOPED
 	inner join TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
 WHERE E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20230101' AND '20240101'
+	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'Z'
 OR E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20230101' AND '20240101'
+	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B' 
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20230101' AND '20240101'
+	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'V'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20230101' AND '20240101'
+	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 ORDER BY V.DESCRICAO
@@ -193,8 +193,6 @@ def receberDados(query):
     dadosDesserializados = json.loads(resultadosJson)
     return dadosDesserializados
 
-#maisVendidosValor = receberDados(queryMaisVendidosValor)
-#maisVendidosQtd = receberDados(queryMaisVendidosQtd)
 maisVendidos = receberDados(queryMaisVendidos)
 ajustes = receberDados(queryAjustes)
 
@@ -236,9 +234,7 @@ def ajustarValores():
 def calcularPareto(tipoPareto, listaValores):
     listaOrdenada = sorted(listaValores, reverse=True, key = lambda d:d[tipoPareto])
     totalVendas = sum(produto[tipoPareto] for produto in listaOrdenada)
-    #print(totalVendas)
     vinteVendas = totalVendas * 0.8
-    #porcentagem = 20
     somaVendas = 0
     listaVinteVendas = []
     for p in listaOrdenada:
@@ -247,7 +243,6 @@ def calcularPareto(tipoPareto, listaValores):
             listaVinteVendas.append(p)
     print(vinteVendas)
     print(somaVendas)
-    #print(listaVinteVendas)
     totalVendasVinte = sum(produto[tipoPareto] for produto in listaVinteVendas)
     print(totalVendasVinte)
     confirmarPorcentagem = (totalVendasVinte * 100) / totalVendas
@@ -265,30 +260,6 @@ qtdFinal = defaultdict(int)
 valorVendasFinal = defaultdict(int)
 
 
-
-# def somarPedidos():
-#     listaValoresFinais = []
-    
-#     listaFinal = defaultdict(lambda: {"idProduto": None, "nomeProduto":None, "qtdEvento": 0, "totalVendas": 0})
-#     for p in valoresFinais:
-        
-
-#         produto = listaFinal[p["idProduto"]]
-#         produto["idProduto"] = p["idProduto"]
-#         produto["nomeProduto"] = p["nomeProduto"]
-#         produto["qtdEvento"] += p["qtdEvento"]
-#         if p['totalEvento'] == 0:
-#             produto["totalVendas"] += p["totalPrecoEvento"]
-#         else:
-#             produto["totalVendas"] += p["totalEvento"]
-
-#     listaValoresFinais = list(listaFinal.values())
-
-#     gerarArquivoExcel('total-vendas', listaValoresFinais)
-#     calcularPareto(listaValoresFinais)
-    
-
-
 def somarPedidos():
     df = pd.DataFrame(valoresFinais)
 
@@ -299,38 +270,9 @@ def somarPedidos():
     listaJson = result.to_json(orient='records')
     resultadoDesserializado = json.loads(listaJson)
     calcularPareto('totalVendas', resultadoDesserializado)
-    calcularPareto('qtdEvento', resultadoDesserializado)
-    #print(resultadoDesserializado)        
+    calcularPareto('qtdEvento', resultadoDesserializado)     
 
 
 ajustarValores()
-#somarPedidos()
-    
-#calcularPareto()
-#gerarArquivoExcel('total-vendas', valoresFinais)
-
-#gerarArquivoExcel(maisVendidosValor)
-    
-
-
-
-
-# def teste():
-#     copiaMaisVendidos = maisVendidos
-#     if maisVendidos[0]['idMovtoped'] == copiaMaisVendidos[0]['idMovtoped']:
-#         print(f"{maisVendidos[0]['idMovtoped']} --- {copiaMaisVendidos[0]['idMovtoped']}")
-#         attQuantidade = maisVendidos[0]['qtdEvento'] + 2
-#         maisVendidos[0]['totalEvento'] = attQuantidade * maisVendidos[0]['precoUnitario']
-#         maisVendidos[0]['qtdEvento'] = attQuantidade
-#         print(maisVendidos[0])
-#     else:
-#         print('não')
-
-
-# teste()
-
-# for p in valoresFinais:
-#     if p['nomeProduto'] == 'Arroz com Açafrão e Alho Porró':
-#         print(f'----{p}')
 
 
