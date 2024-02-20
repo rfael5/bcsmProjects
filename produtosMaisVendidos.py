@@ -22,19 +22,19 @@ queryMaisVendidos = """SELECT V.PK_MOVTOPED as idMovtoped, V.IDX_PRODUTO AS idPr
 	INNER JOIN TPADOCTOPED AS E ON V.RDX_DOCTOPED = PK_DOCTOPED
 	INNER JOIN TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
 WHERE E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
+	AND E.DTPREVISAO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'Z'
 OR E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
+	AND E.DTPREVISAO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
+	AND E.DTEVENTO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'V'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
+	AND E.DTEVENTO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 ORDER BY V.DESCRICAO
@@ -46,19 +46,19 @@ select A.IDX_MOVTOPED AS idMovtoped, V.IDX_PRODUTO AS idProduto, V.DESCRICAO AS 
 	inner join TPADOCTOPED AS E ON V.RDX_DOCTOPED = E.PK_DOCTOPED
 	inner join TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
 WHERE E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
+	AND E.DTPREVISAO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'Z'
 OR E.TPDOCTO = 'EC'
-	AND E.DTPREVISAO BETWEEN '20220101' AND '20230101'
+	AND E.DTPREVISAO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B' 
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
+	AND E.DTEVENTO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'V'
 OR E.TPDOCTO = 'OR'
-	AND E.DTEVENTO BETWEEN '20220101' AND '20230101'
+	AND E.DTEVENTO BETWEEN '20230901' AND '20231001'
 	AND P.IDX_NEGOCIO = 'Produtos Acabados'
 	and E.SITUACAO = 'B'
 ORDER BY V.DESCRICAO
@@ -249,9 +249,9 @@ def calcularPareto(tipoPareto, listaValores):
     print(confirmarPorcentagem)
 
     if tipoPareto == 'qtdEvento':
-        gerarArquivoExcel('vinte_Quantidade', listaVinteVendas)
+        gerarArquivoExcel('vinte_Quantidade_Setembro', listaVinteVendas)
     else:
-        gerarArquivoExcel('vinte_Monetario', listaVinteVendas)
+        gerarArquivoExcel('vinte_Monetario_Setembro', listaVinteVendas)
 
 
 
@@ -266,7 +266,7 @@ def somarPedidos():
     df['totalVendas'] = df.apply(lambda row: row['totalPrecoEvento'] if row['totalEvento'] == 0 else row['totalEvento'], axis=1)
 
     result = df.groupby(['idProduto', 'nomeProduto'])[['qtdEvento', 'totalVendas']].sum().reset_index()
-    gerarArquivoExcel('total-vendas', result)
+    gerarArquivoExcel('total-vendas-setembro', result)
     listaJson = result.to_json(orient='records')
     resultadoDesserializado = json.loads(listaJson)
     calcularPareto('totalVendas', resultadoDesserializado)
