@@ -1,7 +1,11 @@
+from tkinter import filedialog
 from sqlalchemy import create_engine
 import pandas as pd
 import json
 from datetime import datetime
+from tkinter import *
+from tkcalendar import DateEntry
+
 
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
@@ -13,94 +17,25 @@ conexao = (
 
 engine = create_engine(conexao, pool_pre_ping=True)
 
-queryProdutosComposicao =  """
-select 
-	 e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DTEVENTO as dataEvento, p.PK_MOVTOPED as idMovtoped, ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
-from TPAPRODCOMPOSICAO as a 
-	inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
-	inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
-	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
-    inner join TPAPRODUTO as ca on p.IDX_PRODUTO = ca.PK_PRODUTO
-where e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'Z'
-    and c.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'B'
-    and c.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'V'
-    and c.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'B'
-    and c.OPSUPRIMENTOMP = 'S'
-order by p.DESCRICAO
-"""
+dataInicio = ''
+dataFim = ''
 
-queryProdutosAcabados = """
-select a.PK_PRODUTO as idProduto, p.PK_MOVTOPED as idMovtoped, p.DESCRICAO as nomeProduto, a.IDX_LINHA as linha, sum(p.L_QUANTIDADE) as qtdTotal, p.UNIDADE as unidade, a.IDX_NEGOCIO as negocio from TPAPRODUTO as a 
-	inner join TPAMOVTOPED as p on a.PK_PRODUTO = p.IDX_PRODUTO
-	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
-where e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'Z' 
-	and a.IDX_NEGOCIO = 'Produtos acabados'
-or e.TPDOCTO = 'EC' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'B' 
-	and a.IDX_NEGOCIO = 'Produtos acabados'
-or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'V' 
-	and a.IDX_NEGOCIO = 'Produtos acabados'
-or e.TPDOCTO = 'OR' 
-	and e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'B' 
-	and a.IDX_NEGOCIO = 'Produtos acabados'
-group by a.PK_PRODUTO, p.PK_MOVTOPED, p.DESCRICAO, p.UNIDADE, a.IDX_LINHA, a.IDX_NEGOCIO
-order by nomeProduto
-"""
+def formatarData(data):
+    data_objeto = datetime.strptime(data, '%d/%m/%Y')
+    data_formatada = data_objeto.strftime('%Y%m%d')
+    return data_formatada
 
-queryComposicao = """
-select 
-	 c.PK_PRODUTO, c.DESCRICAO, sum(a.QUANTIDADE) as qtdTotalComposicoes, a.UN
-from TPAPRODCOMPOSICAO as a 
-	inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
-	inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
-	inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED 
-where e.DTPREVISAO between '20240227' and '20240228'
-	and e.SITUACAO = 'V'
-	and e.TPDOCTO = 'OR'
-    and c.OPSUPRIMENTOMP = 'S'
-group by c.PK_PRODUTO, c.DESCRICAO, a.UN
-"""
-
-queryAjustes = """
-select A.IDX_MOVTOPED AS idMovtoped, V.IDX_PRODUTO AS idProduto, V.DESCRICAO AS nomeProduto, A.QUANTIDADE AS ajuste, A.PRECO AS precoAjuste from TPAAJUSTEPEDITEM AS A 
-	inner join TPAMOVTOPED AS V ON A.IDX_MOVTOPED = V.PK_MOVTOPED
-	inner join TPADOCTOPED AS E ON V.RDX_DOCTOPED = E.PK_DOCTOPED
-	inner join TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
-where e.TPDOCTO = 'EC' 
-	and E.DTPREVISAO between '20240227' and '20240228'
-	and E.SITUACAO = 'Z'
-    and P.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'EC' 
-	and E.DTPREVISAO between '20240227' and '20240228'
-	and E.SITUACAO = 'B'
-    and P.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'OR' 
-	and E.DTPREVISAO between '20240227' and '20240228'
-	and E.SITUACAO = 'V'
-    and P.OPSUPRIMENTOMP = 'S'
-or e.TPDOCTO = 'OR' 
-	and E.DTPREVISAO between '20240227' and '20240228'
-	and E.SITUACAO = 'B'
-    and P.OPSUPRIMENTOMP = 'S'
-ORDER BY V.DESCRICAO
-"""
+def setarData():
+    
+    dataInicio = dtInicio.get()
+    dtInicioFormatada = formatarData(dataInicio)
+    dataFim = dtFim.get()
+    dtFimFormatada = formatarData(dataFim)
+    produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
+    ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+    produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
+    ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+    somarProdutosEvento(ajustesAplicados)
 
 def receberDados(query):
     response = pd.read_sql_query(query, engine)
@@ -108,18 +43,81 @@ def receberDados(query):
     dadosDesserializados = json.loads(resultadosJson)
     return dadosDesserializados
 
-produtosComposicao = receberDados(queryProdutosComposicao)
-ajustes = receberDados(queryAjustes)
+def getProdutosComposicao(dataInicio, dataFim):
+    queryProdutosComposicao =  f"""
+    select 
+        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DTEVENTO as dataEvento, p.PK_MOVTOPED as idMovtoped, ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
+    from TPAPRODCOMPOSICAO as a 
+        inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
+        inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
+        inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
+        inner join TPAPRODUTO as ca on p.IDX_PRODUTO = ca.PK_PRODUTO
+    where e.TPDOCTO = 'EC' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.SITUACAO = 'Z'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'EC' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.SITUACAO = 'B'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.SITUACAO = 'V'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.SITUACAO = 'B'
+        and c.OPSUPRIMENTOMP = 'S'
+    order by p.DESCRICAO
+    """
+    produtosComposicao = receberDados(queryProdutosComposicao)
+    return produtosComposicao
 
-qtdTotalProducao = []
+def getAjustes(dataInicio, dataFim):
+    queryAjustes = f"""
+    select A.IDX_MOVTOPED AS idMovtoped, V.IDX_PRODUTO AS idProduto, V.DESCRICAO AS nomeProduto, A.QUANTIDADE AS ajuste, A.PRECO AS precoAjuste from TPAAJUSTEPEDITEM AS A 
+        inner join TPAMOVTOPED AS V ON A.IDX_MOVTOPED = V.PK_MOVTOPED
+        inner join TPADOCTOPED AS E ON V.RDX_DOCTOPED = E.PK_DOCTOPED
+        inner join TPAPRODUTO AS P ON V.IDX_PRODUTO = P.PK_PRODUTO
+    where e.TPDOCTO = 'EC' 
+        and E.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and E.SITUACAO = 'Z'
+        and P.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'EC' 
+        and E.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and E.SITUACAO = 'B'
+        and P.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and E.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and E.SITUACAO = 'V'
+        and P.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and E.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and E.SITUACAO = 'B'
+        and P.OPSUPRIMENTOMP = 'S'
+    ORDER BY V.DESCRICAO
+    """ 
+    ajustes = receberDados(queryAjustes)
+    return ajustes
+        
 
-def verificarAjustes(evento):
-    queryAjustes = f"""select PK_AJUSTEPEDITEM as idAjuste, IDX_MOVTOPED as idMovtoped, QUANTIDADE as qtdAlteracao from TPAAJUSTEPEDITEM where IDX_MOVTOPED = '{evento['idMovtoped']}'"""
-    resultado = receberDados(queryAjustes)
-    if len(resultado) > 0:
-        evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + resultado[0]['qtdAlteracao']
+def executarQueries(dataInicio, dataFim):
+    global produtosComposicao
+    global ajustes    
+    
+    for p in produtosComposicao:
+        print(p)
 
-def adicionarAjustes(evento):
+
+# def verificarAjustes(evento):
+#     queryAjustes = f"""select PK_AJUSTEPEDITEM as idAjuste, IDX_MOVTOPED as idMovtoped, QUANTIDADE as qtdAlteracao from TPAAJUSTEPEDITEM where IDX_MOVTOPED = '{evento['idMovtoped']}'"""
+#     resultado = receberDados(queryAjustes)
+#     if len(resultado) > 0:
+#         evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + resultado[0]['qtdAlteracao']
+
+
+def adicionarAjustes(evento, ajustes):
+    global produtosComposicao
     for a in ajustes:
         if a['idMovtoped'] == evento['idMovtoped']:
             evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + a['ajuste']
@@ -132,7 +130,7 @@ def recuperarHoraAtual():
     return data_hora_formatada
 
 
-def calcularQtdProducao():
+def calcularQtdProducao(produtosComposicao):
     for e in produtosComposicao:
         if e['unidadeAcabado'] == 'PP':
             total = (e["qtdProdutoEvento"] / 10) * e["qtdProdutoComposicao"]
@@ -147,21 +145,43 @@ def calcularQtdProducao():
         else:
             total = e["qtdProdutoComposicao"] * e["qtdProdutoEvento"]
             e["totalProducao"] = total
+    
+    return produtosComposicao
 
-calcularQtdProducao()
+#calcularQtdProducao()
 
 
-def aplicarAjustes():
+def aplicarAjustes(produtosComposicao, ajustes):
     for p in produtosComposicao:
-        adicionarAjustes(p)
+        adicionarAjustes(p, ajustes)
+    return produtosComposicao
 
-aplicarAjustes()
+#aplicarAjustes()
 
 def gerarArquivoExcel(tipoArquivo, listaProdutos):
-    caminho_arquivo_excel = f'C:\\Users\\serverteste\\Desktop\\teste2\\arquivos\\{tipoArquivo}--{recuperarHoraAtual()}.xlsx'
+    # Abre a janela de seleção de arquivo
+    root = Tk()
+    root.withdraw()  # Oculta a janela principal do Tkinter
+
+    # Pede ao usuário para escolher o local e o nome do arquivo
+    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
+                                               filetypes=[("Arquivos Excel", "*.xlsx")],
+                                               title="Salvar Arquivo Excel",
+                                               initialfile=f"{tipoArquivo}--{recuperarHoraAtual()}")
+
+    # Verifica se o usuário cancelou a operação
+    if not file_path:
+        print("Operação cancelada pelo usuário.")
+        return
+
+    # Adiciona uma extensão se não for fornecida pelo usuário
+    if not file_path.endswith(".xlsx"):
+        file_path += ".xlsx"
+        
+    #caminho_arquivo_excel = f'C:\\Users\\serverteste\\Desktop\\teste2\\arquivos\\{tipoArquivo}--{recuperarHoraAtual()}.xlsx'
     formatoTabela = pd.DataFrame(listaProdutos)
-    formatoTabela.to_excel(caminho_arquivo_excel)
-    print("ARQUIVO EXCEL GERADO")
+    formatoTabela.to_excel(file_path, index=False)
+    print(f"Arquivo salvo em: {file_path}")
 
 somaProdutosEventos = []
 
@@ -207,7 +227,7 @@ def agruparLinhas(produto):
         return 'Refeições'           
 
 
-def somarProdutosEvento():
+def somarProdutosEvento(produtosComposicao):
         
     dfComposicao = pd.DataFrame(produtosComposicao)
 
@@ -217,7 +237,7 @@ def somarProdutosEvento():
     dfComposicao['totalProducao'] = dfComposicao.apply(converterKg, axis=1)
     dfComposicao['linha'] = dfComposicao.apply(agruparLinhas, axis=1)
     
-    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'unidade', 'linha'])[['totalProducao']].sum().reset_index()
+    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha'])[['totalProducao']].sum().reset_index()
 
     result['unidade'] = result['unidade'].apply(mudarUnidade)
     
@@ -242,5 +262,28 @@ def separarProdutosEvento(listaProdutos):
     gerarArquivoExcel('DOCES',listaDoces)
     gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
-somarProdutosEvento()
+#somarProdutosEvento()
+
+# for p in produtosComposicao:
+#     print(p)
+
+# def buscarData():
+#     data_selecionada = cal.get_date()
+#     print(data_selecionada)
+
+
+# Inicia o loop principal
+root = Tk()
+root.title("Input de Data")
+
+# Cria o widget tkcalendar
+dtInicio = DateEntry(root, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicio.grid(padx=10, pady=10)
+
+dtFim = DateEntry(root, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFim.grid(padx=10, pady=10)
+
+btn_obter_data = Button(root, text="Obter Data", command=setarData)
+btn_obter_data.grid(pady=10)
+root.mainloop()
 
