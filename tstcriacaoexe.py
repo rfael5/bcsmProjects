@@ -5,6 +5,9 @@ import json
 from datetime import datetime
 from tkinter import *
 from tkcalendar import DateEntry
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
@@ -14,12 +17,6 @@ conexao = (
     "UID=Sa;" +
     "PWD=P@ssw0rd2023"
 )
-
-# conexao = (
-#     "mssql+pyodbc://Sa:P@ssw0rd2023"
-#     "192.168.1.137/SOUTTOMAYOR?"
-#     "driver={ODBC Driver 11 for SQL Server};"
-# )
 
 engine = create_engine(conexao, pool_pre_ping=True)
 
@@ -39,8 +36,10 @@ def setarData():
     dtFimFormatada = formatarData(dataFim)
     produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
     ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+    estoque = getEstoque()
     produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
     ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+    adicionarEstoque(ajustesAplicados, estoque)
     somarProdutosEvento(ajustesAplicados)
 
 def receberDados(query):
@@ -105,7 +104,32 @@ def getAjustes(dataInicio, dataFim):
     """ 
     ajustes = receberDados(queryAjustes)
     return ajustes
-        
+
+def getEstoque():
+    queryEstoque = """
+    WITH RankedResults AS (
+        SELECT 
+            E.RDX_PRODUTO,
+            E.SALDOESTOQUE,
+            E.DTULTCPA,
+            P.DESCRICAO,
+            P.UN,
+            ROW_NUMBER() OVER (PARTITION BY RDX_PRODUTO ORDER BY DTULTCPA DESC) AS Rank
+        FROM TPAESTOQUE AS E INNER JOIN TPAPRODUTO AS P ON E.RDX_PRODUTO = P.PK_PRODUTO 
+        WHERE E.DTULTCPA IS NOT NULL
+    )
+    SELECT
+        RDX_PRODUTO,
+        SALDOESTOQUE,
+        DTULTCPA,
+        DESCRICAO,
+        UN
+    FROM RankedResults
+    WHERE Rank = 1
+    ORDER BY RDX_PRODUTO
+    """
+    estoque = receberDados(queryEstoque)
+    return estoque
 
 def executarQueries(dataInicio, dataFim):
     global produtosComposicao
@@ -115,15 +139,7 @@ def executarQueries(dataInicio, dataFim):
         print(p)
 
 
-# def verificarAjustes(evento):
-#     queryAjustes = f"""select PK_AJUSTEPEDITEM as idAjuste, IDX_MOVTOPED as idMovtoped, QUANTIDADE as qtdAlteracao from TPAAJUSTEPEDITEM where IDX_MOVTOPED = '{evento['idMovtoped']}'"""
-#     resultado = receberDados(queryAjustes)
-#     if len(resultado) > 0:
-#         evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + resultado[0]['qtdAlteracao']
-
-
 def adicionarAjustes(evento, ajustes):
-    global produtosComposicao
     for a in ajustes:
         if a['idMovtoped'] == evento['idMovtoped']:
             evento['qtdProdutoEvento'] = evento['qtdProdutoEvento'] + a['ajuste']
@@ -154,20 +170,62 @@ def calcularQtdProducao(produtosComposicao):
     
     return produtosComposicao
 
-#calcularQtdProducao()
-
 
 def aplicarAjustes(produtosComposicao, ajustes):
     for p in produtosComposicao:
         adicionarAjustes(p, ajustes)
     return produtosComposicao
 
-#aplicarAjustes()
+
+def adicionarEstoque(produtos, estoque):
+    for p in produtos:
+        p['estoque'] = 0
+        p['unidadeEstoque'] = ''
+        for e in estoque:
+            if p['idProdutoComposicao'] == e['RDX_PRODUTO']:
+                p['estoque'] = e['SALDOESTOQUE']
+                p['unidadeEstoque'] = e['UN']
+
+def formatarTabela(caminho):
+    wb = load_workbook(caminho)
+    ws = wb.active
+    
+    novos_valores = ["NovoNome1", "NovoNome2", "NovoNome3"]
+
+# Atualizar os valores do cabeçalho
+    ws['A1'] = 'ID'
+    ws['B1'] = 'Nome do produto'
+    ws['C1'] = 'Classificação'
+    ws['D1'] = 'Unidade'
+    ws['E1'] = 'Linha'
+    ws['F1'] = 'Estoque'
+    ws['G1'] = 'Un. Estoque'
+    ws['H1'] = 'Qtd. Produção'
+    
+    for cell in ws[1]:
+        cell.fill = PatternFill(start_color="FDDA0D", end_color="FDDA0D", fill_type="solid")
+    for cell in ws['F'][1:]:
+        cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
+    for cell in ws['G'][1:]:
+        cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
+    for cell in ws['H'][1:]:
+        cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
+    
+    ws.column_dimensions['A'].width = 10
+    ws.column_dimensions['B'].width = 40
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['F'].width = 10
+    ws.column_dimensions['G'].width = 15
+    ws.column_dimensions['H'].width = 15
+    
+    wb.save(caminho)
+    
 
 def gerarArquivoExcel(tipoArquivo, listaProdutos):
-    # Abre a janela de seleção de arquivo
     root = Tk()
-    root.withdraw()  # Oculta a janela principal do Tkinter
+    root.withdraw()
 
     # Pede ao usuário para escolher o local e o nome do arquivo
     file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
@@ -184,9 +242,9 @@ def gerarArquivoExcel(tipoArquivo, listaProdutos):
     if not file_path.endswith(".xlsx"):
         file_path += ".xlsx"
         
-    #caminho_arquivo_excel = f'C:\\Users\\serverteste\\Desktop\\teste2\\arquivos\\{tipoArquivo}--{recuperarHoraAtual()}.xlsx'
     formatoTabela = pd.DataFrame(listaProdutos)
     formatoTabela.to_excel(file_path, index=False)
+    formatarTabela(file_path)
     print(f"Arquivo salvo em: {file_path}")
 
 somaProdutosEventos = []
@@ -243,7 +301,7 @@ def somarProdutosEvento(produtosComposicao):
     dfComposicao['totalProducao'] = dfComposicao.apply(converterKg, axis=1)
     dfComposicao['linha'] = dfComposicao.apply(agruparLinhas, axis=1)
     
-    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha'])[['totalProducao']].sum().reset_index()
+    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha', 'estoque', 'unidadeEstoque'])[['totalProducao']].sum().reset_index()
 
     result['unidade'] = result['unidade'].apply(mudarUnidade)
     
@@ -268,28 +326,30 @@ def separarProdutosEvento(listaProdutos):
     gerarArquivoExcel('DOCES',listaDoces)
     gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
-#somarProdutosEvento()
-
-# for p in produtosComposicao:
-#     print(p)
-
-# def buscarData():
-#     data_selecionada = cal.get_date()
-#     print(data_selecionada)
-
-
 # Inicia o loop principal
 root = Tk()
-root.title("Input de Data")
+root.title("Gerar pedidos de suprimento")
+root.geometry('500x350')
+root.configure(bg='#333333')
+
+explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", bg="#333333", fg="#FFFFFF", font=("Arial", 14))
+explicacao.grid(row=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+lbl_dtInicio = Label(root, text="De:", bg="#333333", fg="#FFFFFF", font=("Arial", 14))
+lbl_dtInicio.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
 # Cria o widget tkcalendar
-dtInicio = DateEntry(root, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtInicio.grid(padx=10, pady=10)
+dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicio.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
-dtFim = DateEntry(root, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtFim.grid(padx=10, pady=10)
+lbl_dtFim = Label(root, text="Até:", bg="#333333", fg="#FFFFFF", font=("Arial", 14))
+lbl_dtFim.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
-btn_obter_data = Button(root, text="Obter Data", command=setarData)
-btn_obter_data.grid(pady=10)
+dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFim.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+
+btn_obter_data = Button(root, text="Gerar Planilhas", bg="#991C52", fg="#FFFFFF", font=("Arial", 16), command=setarData)
+btn_obter_data.grid(row=3, columnspan=2, padx=50, pady=30, sticky="nsew")
+
 root.mainloop()
 
