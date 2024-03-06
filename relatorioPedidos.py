@@ -29,7 +29,6 @@ def formatarData(data):
     return data_formatada
 
 def setarData():
-    
     dataInicio = dtInicio.get()
     dtInicioFormatada = formatarData(dataInicio)
     dataFim = dtFim.get()
@@ -245,18 +244,15 @@ def gerarArquivoExcel(tipoArquivo, listaProdutos):
     root = Tk()
     root.withdraw()
 
-    # Pede ao usuário para escolher o local e o nome do arquivo
     file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
                                                filetypes=[("Arquivos Excel", "*.xlsx")],
                                                title="Salvar Arquivo Excel",
                                                initialfile=f"{tipoArquivo}--{recuperarHoraAtual()}")
 
-    # Verifica se o usuário cancelou a operação
     if not file_path:
         print("Operação cancelada pelo usuário.")
         return
 
-    # Adiciona uma extensão se não for fornecida pelo usuário
     if not file_path.endswith(".xlsx"):
         file_path += ".xlsx"
         
@@ -359,41 +355,34 @@ def separarProdutosEvento(listaProdutos):
     gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
 
-# Inicia o loop principal
+# Tkinter
 root = Tk()
 root.title("Gerar pedidos de suprimento")
 root.geometry('500x400')
 
-# tipoRelatorio = Label(root, text="Gerar documento com linha de produção?", bg="#333333", fg="#FFFFFF", font=("Arial", 14))
-# tipoRelatorio.grid(row=0, columnspan=2, padx=10, pady=10, sticky="nsew")
-
 incluirLinhaProducao = IntVar(value=1)
 semLinhaProducao = IntVar()
 
-# c2 = Checkbutton(root, text='Não',variable=semLinhaProducao, onvalue=1, offvalue=0, bg="#333333", font=("Arial", 14))
-# c2.grid()
-
 explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
-explicacao.grid(row=2, columnspan=2, padx=10, pady=10, sticky="nsew")
+explicacao.grid(row=0, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
-lbl_dtInicio.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+lbl_dtInicio.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-# Cria o widget tkcalendar
 dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtInicio.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+dtInicio.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
 lbl_dtFim = Label(root, text="Até:", font=("Arial", 14))
-lbl_dtFim.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+lbl_dtFim.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
 dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtFim.grid(row=4, column=1, padx=10, pady=10, sticky="w")
+dtFim.grid(row=2, column=1, padx=10, pady=10, sticky="w")
 
 c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
-c1.grid(row=5, columnspan=2, padx=10, pady=10, sticky="nsew")
+c1.grid(row=3, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 btn_obter_data = Button(root, text="Gerar Planilhas", font=("Arial", 16), command=setarData)
-btn_obter_data.grid(row=6, columnspan=2, padx=50, pady=30, sticky="nsew")
+btn_obter_data.grid(row=4, columnspan=2, padx=50, pady=30, sticky="nsew")
 
 root.mainloop()
 
