@@ -4,10 +4,12 @@ import pandas as pd
 import json
 from datetime import datetime
 from tkinter import *
+from tkinter import ttk
 from tkcalendar import DateEntry
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
+from random import choice
 
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
@@ -22,6 +24,7 @@ engine = create_engine(conexao, pool_pre_ping=True)
 
 dataInicio = ''
 dataFim = ''
+produtosAjustados = []
 
 def formatarData(data):
     data_objeto = datetime.strptime(data, '%d/%m/%Y')
@@ -39,7 +42,9 @@ def setarData():
     produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
     ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
     adicionarEstoque(ajustesAplicados, estoque)
-    somarProdutosEvento(ajustesAplicados)
+    produtos = somarProdutosEvento(ajustesAplicados)
+    return produtos
+    
 
 def receberDados(query):
     response = pd.read_sql_query(query, engine)
@@ -148,8 +153,8 @@ def calcularQtdProducao(produtosComposicao):
     for e in produtosComposicao:
         if e['unidadeAcabado'] == 'PP':
             total = (e["qtdProdutoEvento"] / 10) * e["qtdProdutoComposicao"]
-            rendimento = total / e["rendimento"]
-            e["totalProducao"] = rendimento
+            #rendimento = total / e["rendimento"]
+            e["totalProducao"] = total
         elif e['unidadeAcabado'] == 'UD':
             total = (e['qtdProdutoEvento'] / 100) * e['qtdProdutoComposicao']
             e['totalProducao'] = total
@@ -186,39 +191,11 @@ def formatarTabela(caminho):
         ws['A1'] = 'ID'
         ws['B1'] = 'Nome do produto'
         ws['C1'] = 'Classificação'
-        ws['D1'] = 'Unidade'
-        ws['E1'] = 'Linha'
-        ws['F1'] = 'Estoque'
-        ws['G1'] = 'Un. Estoque'
-        ws['H1'] = 'Qtd. Produção'
-        
-        for cell in ws[1]:
-            cell.fill = PatternFill(start_color="FDDA0D", end_color="FDDA0D", fill_type="solid")
-        for cell in ws['F'][1:]:
-            cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
-        for cell in ws['G'][1:]:
-            cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
-        for cell in ws['H'][1:]:
-            cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
-        
-        ws.column_dimensions['A'].width = 10
-        ws.column_dimensions['B'].width = 40
-        ws.column_dimensions['C'].width = 20
-        ws.column_dimensions['D'].width = 15
-        ws.column_dimensions['E'].width = 15
-        ws.column_dimensions['F'].width = 10
-        ws.column_dimensions['G'].width = 15
-        ws.column_dimensions['H'].width = 15
-        
-        wb.save(caminho)
-    else:
-        ws['A1'] = 'ID'
-        ws['B1'] = 'Nome do produto'
-        ws['C1'] = 'Classificação'
-        ws['D1'] = 'Unidade'
+        ws['D1'] = 'Linha'
         ws['E1'] = 'Estoque'
         ws['F1'] = 'Un. Estoque'
         ws['G1'] = 'Qtd. Produção'
+        ws['H1'] = 'Unidade'
         
         for cell in ws[1]:
             cell.fill = PatternFill(start_color="FDDA0D", end_color="FDDA0D", fill_type="solid")
@@ -228,14 +205,46 @@ def formatarTabela(caminho):
             cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
         for cell in ws['G'][1:]:
             cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
+        for cell in ws['H'][1:]:
+            cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
+        
+        ws.column_dimensions['A'].width = 10
+        ws.column_dimensions['B'].width = 40
+        ws.column_dimensions['C'].width = 20
+        ws.column_dimensions['D'].width = 15
+        ws.column_dimensions['E'].width = 10
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['H'].width = 15
+        
+        wb.save(caminho)
+    else:
+        ws['A1'] = 'ID'
+        ws['B1'] = 'Nome do produto'
+        ws['C1'] = 'Classificação'
+        ws['D1'] = 'Estoque'
+        ws['E1'] = 'Un. Estoque'
+        ws['F1'] = 'Qtd. Produção'
+        ws['G1'] = 'Unidade'
+        
+        for cell in ws[1]:
+            cell.fill = PatternFill(start_color="FDDA0D", end_color="FDDA0D", fill_type="solid")
+        for cell in ws['D'][1:]:
+            cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
+        for cell in ws['E'][1:]:
+            cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
+        for cell in ws['F'][1:]:
+            cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
+        for cell in ws['G'][1:]:
+            cell.fill = PatternFill(start_color="6b8e23", end_color="6b8e23", fill_type="solid")
         
         ws.column_dimensions['A'].width = 10
         ws.column_dimensions['B'].width = 40
         ws.column_dimensions['C'].width = 25
         ws.column_dimensions['D'].width = 10
-        ws.column_dimensions['E'].width = 10
+        ws.column_dimensions['E'].width = 15
         ws.column_dimensions['F'].width = 15
-        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['G'].width = 10
         
         wb.save(caminho)
     
@@ -320,10 +329,14 @@ def somarProdutosEvento(produtosComposicao):
 
         result['unidade'] = result['unidade'].apply(mudarUnidade)
         
+        result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']]
+        
         resultJson = result.to_json(orient='records')
         dadosDesserializados = json.loads(resultJson)
+        #separarProdutosEvento(dadosDesserializados)
+        return dadosDesserializados
         
-        separarProdutosEvento(dadosDesserializados)
+        
     
     else:
         dfComposicao['unidade'] = dfComposicao['unidadeComposicao'].apply(alterarStringUnidade)
@@ -333,10 +346,14 @@ def somarProdutosEvento(produtosComposicao):
 
         result['unidade'] = result['unidade'].apply(mudarUnidade)
         
+        result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']]
+        
         resultJson = result.to_json(orient='records')
         dadosDesserializados = json.loads(resultJson)
+        #gerarArquivoExcel('COMPRAS', dadosDesserializados)
+        return dadosDesserializados
         
-        gerarArquivoExcel('COMPRAS', dadosDesserializados)
+        
     
 
 def filtrarListas(tipoFiltro, listaCompleta):
@@ -355,10 +372,14 @@ def separarProdutosEvento(listaProdutos):
     gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
 
-# Tkinter
+
+#Tkinter
 root = Tk()
 root.title("Gerar pedidos de suprimento")
-root.geometry('500x400')
+#root.attributes('-fullscreen', True)
+root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
+# screen_width = root.winfo_screenwidth()
+# screen_height = root.winfo_screenheight()
 
 incluirLinhaProducao = IntVar(value=1)
 semLinhaProducao = IntVar()
@@ -367,22 +388,119 @@ explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual
 explicacao.grid(row=0, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
-lbl_dtInicio.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+lbl_dtInicio.grid(row=1, padx=(100, 0), column=0, sticky="w")
 
 dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtInicio.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+dtInicio.grid(row=2, column=0, padx=(100, 0), pady=10, sticky="w")
 
 lbl_dtFim = Label(root, text="Até:", font=("Arial", 14))
-lbl_dtFim.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+lbl_dtFim.grid(row=1, column=1, padx=(10, 0), pady=5, sticky="w")
 
 dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtFim.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+dtFim.grid(row=2, column=1, padx=(10, 0), pady=10, sticky="w")
 
 c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c1.grid(row=3, columnspan=2, padx=10, pady=10, sticky="nsew")
 
-btn_obter_data = Button(root, text="Gerar Planilhas", font=("Arial", 16), command=setarData)
-btn_obter_data.grid(row=4, columnspan=2, padx=50, pady=30, sticky="nsew")
+def inserirNaLista():
+    teste = setarData()
+    #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
+    for p in teste:
+        if incluirLinhaProducao.get() == 1: 
+            id = p['idProdutoComposicao']
+            nome = p['nomeProdutoComposicao']
+            classificacao = p['classificacao']
+            linha = p['linha']
+            estoque = p['estoque']
+            unidadeEstoque = p['unidadeEstoque']
+            totalProducao = p['totalProducao']
+            unidade = p['unidade']
+            data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
+            table.insert(parent='', index=0, values=data)
+        else:
+            id = p['idProdutoComposicao']
+            nome = p['nomeProdutoComposicao']
+            classificacao = p['classificacao']
+            estoque = p['estoque']
+            unidadeEstoque = p['unidadeEstoque']
+            totalProducao = p['totalProducao']
+            unidade = p['unidade']
+            data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
+            table.insert(parent='', index=0, values=data)
+            
+
+def gerarPlanilha():
+    produtos = setarData()
+    if incluirLinhaProducao.get() == 1:
+        separarProdutosEvento(produtos)
+    else:
+        gerarArquivoExcel('COMPRAS', produtos)
+
+btn_obter_data = Button(root, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
+btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=30, sticky='nsew')
+
+btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
+btn_obter_data.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=30, sticky='nsew')
+
+if incluirLinhaProducao.get() == 1:
+    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    table.heading('ID', text = 'ID')
+    table.heading('Produto', text = 'Produto')
+    table.heading('Classificacao', text = 'Classificacao')
+    table.heading('Linha', text = 'Linha')
+    table.heading('Estoque', text = 'Estoque')
+    table.heading('Un. Estoque', text = 'Un. Estoque')
+    table.heading('Qtd. Producao', text = 'Qtd. Producao')
+    table.heading('Unidade', text = 'Unidade')
+    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
+
+    table.column('ID', width=80, anchor=CENTER)
+    table.column('Produto', width=300, anchor=CENTER)
+    table.column('Classificacao', width=160, anchor=CENTER)
+    table.column('Linha', width=100, anchor=CENTER)
+    table.column('Estoque', width=80, anchor=CENTER)
+    table.column('Un. Estoque', width=80, anchor=CENTER)
+    table.column('Qtd. Producao', width=100, anchor=CENTER)
+    table.column('Unidade', width=80, anchor=CENTER)
+
+    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
+    hsb.grid()
+else:
+    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    table.heading('ID', text = 'ID')
+    table.heading('Produto', text = 'Produto')
+    table.heading('Classificacao', text = 'Classificacao')
+    table.heading('Estoque', text = 'Estoque')
+    table.heading('Un. Estoque', text = 'Un. Estoque')
+    table.heading('Qtd. Producao', text = 'Qtd. Producao')
+    table.heading('Unidade', text = 'Unidade')
+    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
+
+    table.column('ID', width=80, anchor=CENTER)
+    table.column('Produto', width=300, anchor=CENTER)
+    table.column('Classificacao', width=160, anchor=CENTER)
+    table.column('Estoque', width=80, anchor=CENTER)
+    table.column('Un. Estoque', width=80, anchor=CENTER)
+    table.column('Qtd. Producao', width=100, anchor=CENTER)
+    table.column('Unidade', width=80, anchor=CENTER)
+
+    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
+    hsb.grid()
 
 root.mainloop()
+
+# def teste():
+#     #dataInicio = dtInicio.get()
+#     dtInicioFormatada = '20240227'
+#     #dataFim = dtFim.get()
+#     dtFimFormatada = '20240228'
+#     produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
+#     ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+#     estoque = getEstoque()
+#     produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
+#     ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+#     for p in ajustesAplicados:
+#         if 'File Mignon' in p['nomeProdutoComposicao']:
+#             print(f"-----{p}")
+# teste()
 
