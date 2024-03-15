@@ -333,11 +333,9 @@ def somarProdutosEvento(produtosComposicao):
         
         resultJson = result.to_json(orient='records')
         dadosDesserializados = json.loads(resultJson)
+        dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
         #separarProdutosEvento(dadosDesserializados)
-        return dadosDesserializados
-        
-        
-    
+        return dadosOrdenados
     else:
         dfComposicao['unidade'] = dfComposicao['unidadeComposicao'].apply(alterarStringUnidade)
         dfComposicao['totalProducao'] = dfComposicao.apply(converterKg, axis=1)
@@ -350,8 +348,9 @@ def somarProdutosEvento(produtosComposicao):
         
         resultJson = result.to_json(orient='records')
         dadosDesserializados = json.loads(resultJson)
+        dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
         #gerarArquivoExcel('COMPRAS', dadosDesserializados)
-        return dadosDesserializados
+        return dadosOrdenados
         
         
     
@@ -399,13 +398,41 @@ lbl_dtFim.grid(row=1, column=1, padx=(10, 0), pady=5, sticky="w")
 dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
 dtFim.grid(row=2, column=1, padx=(10, 0), pady=10, sticky="w")
 
-c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+def atualizarTabela():
+    global table
+    if incluirLinhaProducao.get() != 1: 
+        table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+        table.heading('ID', text = 'ID')
+        table.heading('Produto', text = 'Produto')
+        table.heading('Classificacao', text = 'Classificacao')
+        table.heading('Estoque', text = 'Estoque')
+        table.heading('Un. Estoque', text = 'Un. Estoque')
+        table.heading('Qtd. Producao', text = 'Qtd. Producao')
+        table.heading('Unidade', text = 'Unidade')
+        table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
+
+        table.column('ID', width=80, anchor=CENTER)
+        table.column('Produto', width=300, anchor=CENTER)
+        table.column('Classificacao', width=160, anchor=CENTER)
+        table.column('Estoque', width=80, anchor=CENTER)
+        table.column('Un. Estoque', width=80, anchor=CENTER)
+        table.column('Qtd. Producao', width=100, anchor=CENTER)
+        table.column('Unidade', width=80, anchor=CENTER)
+
+        hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
+        hsb.grid()
+    else:
+        criarTabela()
+
+c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
 c1.grid(row=3, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 def inserirNaLista():
-    teste = setarData()
+    produtos = setarData()
+    produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
+    table.delete(*table.get_children())
     #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
-    for p in teste:
+    for p in produtosOrdenados:
         if incluirLinhaProducao.get() == 1: 
             id = p['idProdutoComposicao']
             nome = p['nomeProdutoComposicao']
@@ -442,7 +469,9 @@ btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=30, sticky
 btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
 btn_obter_data.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=30, sticky='nsew')
 
-if incluirLinhaProducao.get() == 1:
+def criarTabela():
+    global table 
+    
     table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
     table.heading('ID', text = 'ID')
     table.heading('Produto', text = 'Produto')
@@ -465,28 +494,8 @@ if incluirLinhaProducao.get() == 1:
 
     hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
     hsb.grid()
-else:
-    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
-    table.heading('ID', text = 'ID')
-    table.heading('Produto', text = 'Produto')
-    table.heading('Classificacao', text = 'Classificacao')
-    table.heading('Estoque', text = 'Estoque')
-    table.heading('Un. Estoque', text = 'Un. Estoque')
-    table.heading('Qtd. Producao', text = 'Qtd. Producao')
-    table.heading('Unidade', text = 'Unidade')
-    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
 
-    table.column('ID', width=80, anchor=CENTER)
-    table.column('Produto', width=300, anchor=CENTER)
-    table.column('Classificacao', width=160, anchor=CENTER)
-    table.column('Estoque', width=80, anchor=CENTER)
-    table.column('Un. Estoque', width=80, anchor=CENTER)
-    table.column('Qtd. Producao', width=100, anchor=CENTER)
-    table.column('Unidade', width=80, anchor=CENTER)
-
-    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
-    hsb.grid()
-
+criarTabela()
 root.mainloop()
 
 # def teste():
