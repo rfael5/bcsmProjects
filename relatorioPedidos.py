@@ -289,9 +289,10 @@ def alterarStringUnidade(unidade):
 
 def converterKg(produto):
     if str(produto['unidade']) == "GR" or str(produto['unidade']) == "ML":
-        return produto['totalProducao'] / 1000
+        result = produto['totalProducao'] / 1000 
     else:
-        return produto['totalProducao']
+        result = produto['totalProducao']
+    return round(result, 4)
 
 def agruparLinhas(produto):
     
@@ -315,9 +316,7 @@ def agruparLinhas(produto):
 
 
 def somarProdutosEvento(produtosComposicao):
-        
     dfComposicao = pd.DataFrame(produtosComposicao)
-
     dfComposicao.drop_duplicates(inplace=True)
     
     if incluirLinhaProducao.get() == 1:
@@ -351,8 +350,6 @@ def somarProdutosEvento(produtosComposicao):
         dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
         #gerarArquivoExcel('COMPRAS', dadosDesserializados)
         return dadosOrdenados
-        
-        
     
 
 def filtrarListas(tipoFiltro, listaCompleta):
@@ -371,32 +368,32 @@ def separarProdutosEvento(listaProdutos):
     gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
 
+def criarTabela():
+    global table 
+    
+    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    table.heading('ID', text = 'ID')
+    table.heading('Produto', text = 'Produto')
+    table.heading('Classificacao', text = 'Classificacao')
+    table.heading('Linha', text = 'Linha')
+    table.heading('Estoque', text = 'Estoque')
+    table.heading('Un. Estoque', text = 'Un. Estoque')
+    table.heading('Qtd. Producao', text = 'Qtd. Producao')
+    table.heading('Unidade', text = 'Unidade')
+    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
-#Tkinter
-root = Tk()
-root.title("Gerar pedidos de suprimento")
-#root.attributes('-fullscreen', True)
-root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
-# screen_width = root.winfo_screenwidth()
-# screen_height = root.winfo_screenheight()
+    table.column('ID', width=80, anchor=CENTER)
+    table.column('Produto', width=300, anchor=CENTER)
+    table.column('Classificacao', width=160, anchor=CENTER)
+    table.column('Linha', width=100, anchor=CENTER)
+    table.column('Estoque', width=80, anchor=CENTER)
+    table.column('Un. Estoque', width=80, anchor=CENTER)
+    table.column('Qtd. Producao', width=100, anchor=CENTER)
+    table.column('Unidade', width=80, anchor=CENTER)
 
-incluirLinhaProducao = IntVar(value=1)
-semLinhaProducao = IntVar()
+    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
+    hsb.grid()
 
-explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
-explicacao.grid(row=0, columnspan=2, padx=10, pady=10, sticky="nsew")
-
-lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
-lbl_dtInicio.grid(row=1, padx=(100, 0), column=0, sticky="w")
-
-dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtInicio.grid(row=2, column=0, padx=(100, 0), pady=10, sticky="w")
-
-lbl_dtFim = Label(root, text="Até:", font=("Arial", 14))
-lbl_dtFim.grid(row=1, column=1, padx=(10, 0), pady=5, sticky="w")
-
-dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-dtFim.grid(row=2, column=1, padx=(10, 0), pady=10, sticky="w")
 
 def atualizarTabela():
     global table
@@ -409,7 +406,7 @@ def atualizarTabela():
         table.heading('Un. Estoque', text = 'Un. Estoque')
         table.heading('Qtd. Producao', text = 'Qtd. Producao')
         table.heading('Unidade', text = 'Unidade')
-        table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
+        table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
         table.column('ID', width=80, anchor=CENTER)
         table.column('Produto', width=300, anchor=CENTER)
@@ -424,8 +421,6 @@ def atualizarTabela():
     else:
         criarTabela()
 
-c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
-c1.grid(row=3, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 def inserirNaLista():
     produtos = setarData()
@@ -463,53 +458,55 @@ def gerarPlanilha():
     else:
         gerarArquivoExcel('COMPRAS', produtos)
 
+
+#Tkinter
+root = Tk()
+root.title("Gerar pedidos de suprimento")
+#root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
+
+incluirLinhaProducao = IntVar(value=1)
+semLinhaProducao = IntVar()
+filtrarSal = IntVar(value=0)
+filtrarDoces = IntVar(value=0)
+filtrarRefeicoes = IntVar(value=0)
+
+explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
+explicacao.grid(row=0, columnspan=2, padx=(150, 0), pady=10, sticky="nsew")
+
+lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
+lbl_dtInicio.grid(row=1, padx=(0, 190), column=0, sticky="e")
+
+dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicio.grid(row=2, column=0, padx=(150, 0), pady=5, sticky="e")
+
+lbl_dtFim = Label(root, text="Até:", font=("Arial", 14))
+lbl_dtFim.grid(row=1, column=1, padx=(50, 0), pady=5, sticky="w")
+
+dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
+
+c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
+c1.grid(row=3, columnspan=2, padx=(150, 0), pady=2, sticky="nsew")
+
 btn_obter_data = Button(root, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
-btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=30, sticky='nsew')
+btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
+
+txtfiltros = Label(root, text="Selecione os produtos que você deseja filtrar da lista.", font=("Arial", 14))
+txtfiltros.grid(row=6, columnspan=2, padx=(150,0), pady=5, sticky="nsew")
+
+c_sal = Checkbutton(root, text='Ref',variable=filtrarRefeicoes, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_sal.grid(row=7, column=0, padx=10, pady=0, sticky='e')
+
+c_doces = Checkbutton(root, text='Doces',variable=filtrarDoces, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_doces.grid(row=7, column=1, padx=(0,0), pady=0, sticky='w')
+
+c_refeicoes = Checkbutton(root, text='Sal',variable=filtrarSal, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_refeicoes.grid(row=7, column=1, padx=(85,0), pady=0, sticky='w')
 
 btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
-btn_obter_data.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=30, sticky='nsew')
-
-def criarTabela():
-    global table 
-    
-    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
-    table.heading('ID', text = 'ID')
-    table.heading('Produto', text = 'Produto')
-    table.heading('Classificacao', text = 'Classificacao')
-    table.heading('Linha', text = 'Linha')
-    table.heading('Estoque', text = 'Estoque')
-    table.heading('Un. Estoque', text = 'Un. Estoque')
-    table.heading('Qtd. Producao', text = 'Qtd. Producao')
-    table.heading('Unidade', text = 'Unidade')
-    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=30, sticky="nsew")
-
-    table.column('ID', width=80, anchor=CENTER)
-    table.column('Produto', width=300, anchor=CENTER)
-    table.column('Classificacao', width=160, anchor=CENTER)
-    table.column('Linha', width=100, anchor=CENTER)
-    table.column('Estoque', width=80, anchor=CENTER)
-    table.column('Un. Estoque', width=80, anchor=CENTER)
-    table.column('Qtd. Producao', width=100, anchor=CENTER)
-    table.column('Unidade', width=80, anchor=CENTER)
-
-    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
-    hsb.grid()
+btn_obter_data.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
 
 criarTabela()
 root.mainloop()
 
-# def teste():
-#     #dataInicio = dtInicio.get()
-#     dtInicioFormatada = '20240227'
-#     #dataFim = dtFim.get()
-#     dtFimFormatada = '20240228'
-#     produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
-#     ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
-#     estoque = getEstoque()
-#     produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
-#     ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
-#     for p in ajustesAplicados:
-#         if 'File Mignon' in p['nomeProdutoComposicao']:
-#             print(f"-----{p}")
-# teste()
 
