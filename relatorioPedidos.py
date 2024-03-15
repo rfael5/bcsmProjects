@@ -6,6 +6,7 @@ from datetime import datetime
 from tkinter import *
 from tkinter import ttk
 from tkcalendar import DateEntry
+from tkinter import messagebox
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
@@ -36,14 +37,18 @@ def setarData():
     dtInicioFormatada = formatarData(dataInicio)
     dataFim = dtFim.get()
     dtFimFormatada = formatarData(dataFim)
-    produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
-    ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
-    estoque = getEstoque()
-    produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
-    ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
-    adicionarEstoque(ajustesAplicados, estoque)
-    produtos = somarProdutosEvento(ajustesAplicados)
-    return produtos
+    if dtInicioFormatada < dtFimFormatada:
+        produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
+        ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+        estoque = getEstoque()
+        produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
+        ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+        adicionarEstoque(ajustesAplicados, estoque)
+        produtos = somarProdutosEvento(ajustesAplicados)
+        return produtos
+    else:
+        return None
+        
     
 
 def receberDados(query):
@@ -295,7 +300,6 @@ def converterKg(produto):
     return round(result, 4)
 
 def agruparLinhas(produto):
-    
     if '\x00' in produto['linha']:
         produto['linha'] = produto['linha'].replace('\x00', '')
         
@@ -357,21 +361,25 @@ def filtrarListas(tipoFiltro, listaCompleta):
     return listaFiltrada
 
 def separarProdutosEvento(listaProdutos):
-    if trazerTodos.get() == 1:       
-        gerarArquivoExcel('LISTA_PEDIDOS', listaProdutos)
-    if filtrarSal.get() == 1:
-        listaSal = filtrarListas('Sal', listaProdutos)
-        gerarArquivoExcel('SAL',listaSal)
-    if filtrarDoces.get() == 1:
-        listaDoces = filtrarListas('Doces', listaProdutos)
-        gerarArquivoExcel('DOCES',listaDoces)
-    if filtrarRefeicoes.get() == 1:
-        listaRefeicoes = filtrarListas('Refeições', listaProdutos)
-        gerarArquivoExcel('REFEICOES',listaRefeicoes)
+    if trazerTodos.get() or filtrarSal.get() or  filtrarDoces.get() or filtrarRefeicoes.get() == 1:
+        if trazerTodos.get() == 1:       
+            gerarArquivoExcel('LISTA_PEDIDOS', listaProdutos)
+        if filtrarSal.get() == 1:
+            listaSal = filtrarListas('Sal', listaProdutos)
+            gerarArquivoExcel('SAL',listaSal)
+        if filtrarDoces.get() == 1:
+            listaDoces = filtrarListas('Doces', listaProdutos)
+            gerarArquivoExcel('DOCES',listaDoces)
+        if filtrarRefeicoes.get() == 1:
+            listaRefeicoes = filtrarListas('Refeições', listaProdutos)
+            gerarArquivoExcel('REFEICOES',listaRefeicoes)
+    else:
+        messagebox.showinfo("Seleção Inválida", "Selecione o tipo de planilha a ser gerado.")
+        return None
+
 
 def criarTabela():
     global table 
-    
     table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
     table.heading('ID', text = 'ID')
     table.heading('Produto', text = 'Produto')
@@ -391,9 +399,6 @@ def criarTabela():
     table.column('Un. Estoque', width=80, anchor=CENTER)
     table.column('Qtd. Producao', width=100, anchor=CENTER)
     table.column('Unidade', width=80, anchor=CENTER)
-
-    hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
-    hsb.grid()
 
 
 def atualizarTabela():
@@ -416,9 +421,6 @@ def atualizarTabela():
         table.column('Un. Estoque', width=80, anchor=CENTER)
         table.column('Qtd. Producao', width=100, anchor=CENTER)
         table.column('Unidade', width=80, anchor=CENTER)
-
-        hsb = ttk.Scrollbar(root, orient="horizontal", command=table.xview)
-        hsb.grid()
     else:
         criarTabela()
 
@@ -440,7 +442,10 @@ def selecionarOpcao(event):
     print(f"Opção selecionada: {valorSelecionado}")
 
 def inserirNaLista():
-    produtos = selecionarOpcao(Event)
+    if incluirLinhaProducao.get() == 1:
+        produtos = selecionarOpcao(Event)
+    else:
+        produtos = setarData()
     produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
     table.delete(*table.get_children())
     #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
@@ -470,10 +475,13 @@ def inserirNaLista():
 
 def gerarPlanilha():
     produtos = setarData()
-    if incluirLinhaProducao.get() == 1:
-        separarProdutosEvento(produtos)
+    if produtos == None:
+        messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
     else:
-        gerarArquivoExcel('COMPRAS', produtos)
+        if incluirLinhaProducao.get() == 1:
+            separarProdutosEvento(produtos)
+        else:
+            gerarArquivoExcel('COMPRAS', produtos)
 
 
 #Tkinter
@@ -488,7 +496,7 @@ filtrarDoces = IntVar(value=0)
 filtrarRefeicoes = IntVar(value=0)
 trazerTodos = IntVar(value=1)
 
-explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
+explicacao = Label(root, text="Selecione abaixo o período de tempo para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
 explicacao.grid(row=0, columnspan=2, padx=(150, 0), pady=10, sticky="nsew")
 
 lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
@@ -510,14 +518,14 @@ opcoes = ['Todos os produtos', 'Sal', 'Doces', 'Refeições']
 opcaoSelecionada = StringVar()
 opcaoSelecionada.set('Todos os produtos')
 combo = ttk.Combobox(root, values=opcoes, textvariable=opcaoSelecionada)
-combo.grid(row=4)
+combo.grid(row=4, padx=(160, 100), columnspan=2, sticky='nsew')
 combo.bind("<<ComboboxSelected>>", selecionarOpcao)
 
 btn_obter_data = Button(root, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
-btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
+btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=2, sticky='nsew')
 
 txtfiltros = Label(root, text="Selecione os produtos que você deseja filtrar da lista.", font=("Arial", 14))
-txtfiltros.grid(row=7, columnspan=2, padx=(150,0), pady=5, sticky="nsew")
+txtfiltros.grid(row=7, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 
 c_todos = Checkbutton(root, text='Todos',variable=trazerTodos, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c_todos.grid(row=8, column=0, padx=(0,95), pady=0, sticky='e')
@@ -532,7 +540,7 @@ c_refeicoes = Checkbutton(root, text='Sal',variable=filtrarSal, onvalue=1, offva
 c_refeicoes.grid(row=8, column=1, padx=(85,0), pady=0, sticky='w')
 
 btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
-btn_obter_data.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
+btn_obter_data.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
 
 criarTabela()
 root.mainloop()
