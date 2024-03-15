@@ -356,17 +356,18 @@ def filtrarListas(tipoFiltro, listaCompleta):
     listaFiltrada = list(filter(lambda produto:produto['linha'] == tipoFiltro, listaCompleta))
     return listaFiltrada
 
-
 def separarProdutosEvento(listaProdutos):
-    listaSal = filtrarListas('Sal', listaProdutos)
-    listaDoces = filtrarListas('Doces', listaProdutos)
-    listaRefeicoes = filtrarListas('Refeições', listaProdutos)
-    
-    gerarArquivoExcel('LISTA_PEDIDOS', listaProdutos)
-    gerarArquivoExcel('SAL',listaSal)
-    gerarArquivoExcel('DOCES',listaDoces)
-    gerarArquivoExcel('REFEICOES',listaRefeicoes)
-
+    if trazerTodos.get() == 1:       
+        gerarArquivoExcel('LISTA_PEDIDOS', listaProdutos)
+    if filtrarSal.get() == 1:
+        listaSal = filtrarListas('Sal', listaProdutos)
+        gerarArquivoExcel('SAL',listaSal)
+    if filtrarDoces.get() == 1:
+        listaDoces = filtrarListas('Doces', listaProdutos)
+        gerarArquivoExcel('DOCES',listaDoces)
+    if filtrarRefeicoes.get() == 1:
+        listaRefeicoes = filtrarListas('Refeições', listaProdutos)
+        gerarArquivoExcel('REFEICOES',listaRefeicoes)
 
 def criarTabela():
     global table 
@@ -380,7 +381,7 @@ def criarTabela():
     table.heading('Un. Estoque', text = 'Un. Estoque')
     table.heading('Qtd. Producao', text = 'Qtd. Producao')
     table.heading('Unidade', text = 'Unidade')
-    table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    table.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     table.column('ID', width=80, anchor=CENTER)
     table.column('Produto', width=300, anchor=CENTER)
@@ -406,7 +407,7 @@ def atualizarTabela():
         table.heading('Un. Estoque', text = 'Un. Estoque')
         table.heading('Qtd. Producao', text = 'Qtd. Producao')
         table.heading('Unidade', text = 'Unidade')
-        table.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+        table.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
         table.column('ID', width=80, anchor=CENTER)
         table.column('Produto', width=300, anchor=CENTER)
@@ -421,9 +422,25 @@ def atualizarTabela():
     else:
         criarTabela()
 
+def selecionarOpcao(event):
+    todosProdutos = setarData()
+    valorSelecionado = combo.get()
+    if valorSelecionado == 'Todos os produtos':
+        return todosProdutos
+    elif valorSelecionado == 'Sal':
+        produtosSal = filtrarListas('Sal', todosProdutos)
+        return produtosSal
+    elif valorSelecionado == 'Doces':
+        produtosDoce = filtrarListas('Doces', todosProdutos)
+        return produtosDoce
+    elif valorSelecionado == 'Refeições':
+        produtosRefeicao = filtrarListas('Refeições', todosProdutos)
+        return produtosRefeicao
+    
+    print(f"Opção selecionada: {valorSelecionado}")
 
 def inserirNaLista():
-    produtos = setarData()
+    produtos = selecionarOpcao(Event)
     produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
     table.delete(*table.get_children())
     #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
@@ -469,6 +486,7 @@ semLinhaProducao = IntVar()
 filtrarSal = IntVar(value=0)
 filtrarDoces = IntVar(value=0)
 filtrarRefeicoes = IntVar(value=0)
+trazerTodos = IntVar(value=1)
 
 explicacao = Label(root, text="Selecione abaixo o periodo de tempo\n para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
 explicacao.grid(row=0, columnspan=2, padx=(150, 0), pady=10, sticky="nsew")
@@ -488,23 +506,33 @@ dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
 c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
 c1.grid(row=3, columnspan=2, padx=(150, 0), pady=2, sticky="nsew")
 
+opcoes = ['Todos os produtos', 'Sal', 'Doces', 'Refeições']
+opcaoSelecionada = StringVar()
+opcaoSelecionada.set('Todos os produtos')
+combo = ttk.Combobox(root, values=opcoes, textvariable=opcaoSelecionada)
+combo.grid(row=4)
+combo.bind("<<ComboboxSelected>>", selecionarOpcao)
+
 btn_obter_data = Button(root, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
-btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
+btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
 
 txtfiltros = Label(root, text="Selecione os produtos que você deseja filtrar da lista.", font=("Arial", 14))
-txtfiltros.grid(row=6, columnspan=2, padx=(150,0), pady=5, sticky="nsew")
+txtfiltros.grid(row=7, columnspan=2, padx=(150,0), pady=5, sticky="nsew")
+
+c_todos = Checkbutton(root, text='Todos',variable=trazerTodos, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_todos.grid(row=8, column=0, padx=(0,95), pady=0, sticky='e')
 
 c_sal = Checkbutton(root, text='Ref',variable=filtrarRefeicoes, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
-c_sal.grid(row=7, column=0, padx=10, pady=0, sticky='e')
+c_sal.grid(row=8, column=0, padx=10, pady=0, sticky='e')
 
 c_doces = Checkbutton(root, text='Doces',variable=filtrarDoces, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
-c_doces.grid(row=7, column=1, padx=(0,0), pady=0, sticky='w')
+c_doces.grid(row=8, column=1, padx=(0,0), pady=0, sticky='w')
 
 c_refeicoes = Checkbutton(root, text='Sal',variable=filtrarSal, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
-c_refeicoes.grid(row=7, column=1, padx=(85,0), pady=0, sticky='w')
+c_refeicoes.grid(row=8, column=1, padx=(85,0), pady=0, sticky='w')
 
 btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
-btn_obter_data.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
+btn_obter_data.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=5, sticky='nsew')
 
 criarTabela()
 root.mainloop()
