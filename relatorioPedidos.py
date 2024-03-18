@@ -32,6 +32,7 @@ def formatarData(data):
     data_formatada = data_objeto.strftime('%Y%m%d')
     return data_formatada
 
+
 def setarData():
     dataInicio = dtInicio.get()
     dtInicioFormatada = formatarData(dataInicio)
@@ -39,17 +40,22 @@ def setarData():
     dtFimFormatada = formatarData(dataFim)
     if dtInicioFormatada < dtFimFormatada:
         produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
-        ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
-        estoque = getEstoque()
-        produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
-        ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
-        adicionarEstoque(ajustesAplicados, estoque)
-        produtos = somarProdutosEvento(ajustesAplicados)
-        return produtos
+        if len(produtosComposicao) == 0:
+            tamanhoLista = 0
+            criarTabela()
+            return tamanhoLista
+        else:
+            ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+            estoque = getEstoque()
+            produtosQtdAjustada = calcularQtdProducao(produtosComposicao)
+            ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+            adicionarEstoque(ajustesAplicados, estoque)
+            produtos = somarProdutosEvento(ajustesAplicados)
+            return produtos
     else:
+        criarTabela()
         return None
         
-    
 
 def receberDados(query):
     response = pd.read_sql_query(query, engine)
@@ -354,11 +360,16 @@ def somarProdutosEvento(produtosComposicao):
         dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
         #gerarArquivoExcel('COMPRAS', dadosDesserializados)
         return dadosOrdenados
-    
+
 
 def filtrarListas(tipoFiltro, listaCompleta):
-    listaFiltrada = list(filter(lambda produto:produto['linha'] == tipoFiltro, listaCompleta))
-    return listaFiltrada
+    if listaCompleta == None:
+        return None
+    elif listaCompleta == 0:
+        return 0
+    else:
+        listaFiltrada = list(filter(lambda produto:produto['linha'] == tipoFiltro, listaCompleta))
+        return listaFiltrada
 
 def separarProdutosEvento(listaProdutos):
     if trazerTodos.get() or filtrarSal.get() or  filtrarDoces.get() or filtrarRefeicoes.get() == 1:
@@ -446,37 +457,45 @@ def inserirNaLista():
         produtos = selecionarOpcao(Event)
     else:
         produtos = setarData()
-    produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
-    table.delete(*table.get_children())
-    #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
-    for p in produtosOrdenados:
-        if incluirLinhaProducao.get() == 1: 
-            id = p['idProdutoComposicao']
-            nome = p['nomeProdutoComposicao']
-            classificacao = p['classificacao']
-            linha = p['linha']
-            estoque = p['estoque']
-            unidadeEstoque = p['unidadeEstoque']
-            totalProducao = p['totalProducao']
-            unidade = p['unidade']
-            data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
-            table.insert(parent='', index=0, values=data)
-        else:
-            id = p['idProdutoComposicao']
-            nome = p['nomeProdutoComposicao']
-            classificacao = p['classificacao']
-            estoque = p['estoque']
-            unidadeEstoque = p['unidadeEstoque']
-            totalProducao = p['totalProducao']
-            unidade = p['unidade']
-            data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
-            table.insert(parent='', index=0, values=data)
+    
+    if produtos == None:
+        messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
+    elif produtos == 0:
+        messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo')    
+    else:
+        produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
+        table.delete(*table.get_children())
+        #['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']
+        for p in produtosOrdenados:
+            if incluirLinhaProducao.get() == 1: 
+                id = p['idProdutoComposicao']
+                nome = p['nomeProdutoComposicao']
+                classificacao = p['classificacao']
+                linha = p['linha']
+                estoque = p['estoque']
+                unidadeEstoque = p['unidadeEstoque']
+                totalProducao = p['totalProducao']
+                unidade = p['unidade']
+                data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
+                table.insert(parent='', index=0, values=data)
+            else:
+                id = p['idProdutoComposicao']
+                nome = p['nomeProdutoComposicao']
+                classificacao = p['classificacao']
+                estoque = p['estoque']
+                unidadeEstoque = p['unidadeEstoque']
+                totalProducao = p['totalProducao']
+                unidade = p['unidade']
+                data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
+                table.insert(parent='', index=0, values=data)
             
 
 def gerarPlanilha():
     produtos = setarData()
     if produtos == None:
         messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
+    elif produtos == 0:
+        messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo') 
     else:
         if incluirLinhaProducao.get() == 1:
             separarProdutosEvento(produtos)
@@ -544,5 +563,7 @@ btn_obter_data.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=1, sticky=
 
 criarTabela()
 root.mainloop()
+
+
 
 
