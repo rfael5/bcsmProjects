@@ -391,7 +391,7 @@ def separarProdutosEvento(listaProdutos):
 
 def criarTabela():
     global table 
-    table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    table = ttk.Treeview(secondFrame, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
     table.heading('ID', text = 'ID')
     table.heading('Produto', text = 'Produto')
     table.heading('Classificacao', text = 'Classificacao')
@@ -415,7 +415,7 @@ def criarTabela():
 def atualizarTabela():
     global table
     if incluirLinhaProducao.get() != 1: 
-        table = ttk.Treeview(root, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+        table = ttk.Treeview(secondFrame, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
         table.heading('ID', text = 'ID')
         table.heading('Produto', text = 'Produto')
         table.heading('Classificacao', text = 'Classificacao')
@@ -506,7 +506,25 @@ def gerarPlanilha():
 #Tkinter
 root = Tk()
 root.title("Gerar pedidos de suprimento")
-#root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
+
+root.geometry("1150x800")
+
+mainFrame = Frame(root)
+mainFrame.pack(fill=BOTH, expand=1)
+
+canvas = Canvas(mainFrame)
+canvas.pack(side=LEFT, fill=BOTH, expand=1)
+#canvas.grid(row=0, column=0, sticky=EW)
+
+scrollbar = ttk.Scrollbar(mainFrame, orient=VERTICAL, command=canvas.yview)
+scrollbar.pack(side=RIGHT, fill=Y)
+#scrollbar.grid(row=0, rowspan=10, column=1, sticky="ns")
+
+canvas.configure(yscrollcommand=scrollbar.set)
+canvas.bind('<Configure>', lambda e:canvas.configure(scrollregion=canvas.bbox("all")))
+
+secondFrame = Frame(canvas)
+canvas.create_window((0, 0), window=secondFrame, anchor="nw")
 
 incluirLinhaProducao = IntVar(value=1)
 semLinhaProducao = IntVar()
@@ -515,51 +533,52 @@ filtrarDoces = IntVar(value=0)
 filtrarRefeicoes = IntVar(value=0)
 trazerTodos = IntVar(value=1)
 
-explicacao = Label(root, text="Selecione abaixo o período de tempo para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
+explicacao = Label(secondFrame, text="Selecione abaixo o período de tempo para o qual você quer gerar a lista de\n pedidos de suprimento.", font=("Arial", 14))
 explicacao.grid(row=0, columnspan=2, padx=(150, 0), pady=10, sticky="nsew")
 
-lbl_dtInicio = Label(root, text="De:", font=("Arial", 14))
+lbl_dtInicio = Label(secondFrame, text="De:", font=("Arial", 14))
 lbl_dtInicio.grid(row=1, padx=(0, 190), column=0, sticky="e")
 
-dtInicio = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicio = DateEntry(secondFrame, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
 dtInicio.grid(row=2, column=0, padx=(150, 0), pady=5, sticky="e")
 
-lbl_dtFim = Label(root, text="Até:", font=("Arial", 14))
+lbl_dtFim = Label(secondFrame, text="Até:", font=("Arial", 14))
 lbl_dtFim.grid(row=1, column=1, padx=(50, 0), pady=5, sticky="w")
 
-dtFim = DateEntry(root, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFim = DateEntry(secondFrame, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
 dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
 
-c1 = Checkbutton(root, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
+c1 = Checkbutton(secondFrame, text='Gerar documento com linha de produção?',variable=incluirLinhaProducao, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5, command=atualizarTabela)
 c1.grid(row=3, columnspan=2, padx=(150, 0), pady=2, sticky="nsew")
 
 opcoes = ['Todos os produtos', 'Sal', 'Doces', 'Refeições']
 opcaoSelecionada = StringVar()
 opcaoSelecionada.set('Todos os produtos')
-combo = ttk.Combobox(root, values=opcoes, textvariable=opcaoSelecionada)
+combo = ttk.Combobox(secondFrame, values=opcoes, textvariable=opcaoSelecionada)
 combo.grid(row=4, padx=(160, 100), columnspan=2, sticky='nsew')
 combo.bind("<<ComboboxSelected>>", selecionarOpcao)
 
-btn_obter_data = Button(root, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
+btn_obter_data = Button(secondFrame, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
 btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=2, sticky='nsew')
 
-txtfiltros = Label(root, text="Selecione os produtos que você deseja filtrar da lista.", font=("Arial", 14))
+txtfiltros = Label(secondFrame, text="Selecione os produtos que você deseja filtrar da lista.", font=("Arial", 14))
 txtfiltros.grid(row=7, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 
-c_todos = Checkbutton(root, text='Todos',variable=trazerTodos, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_todos = Checkbutton(secondFrame, text='Todos',variable=trazerTodos, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c_todos.grid(row=8, column=0, padx=(0,95), pady=0, sticky='e')
 
-c_sal = Checkbutton(root, text='Ref',variable=filtrarRefeicoes, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_sal = Checkbutton(secondFrame, text='Ref',variable=filtrarRefeicoes, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c_sal.grid(row=8, column=0, padx=10, pady=0, sticky='e')
 
-c_doces = Checkbutton(root, text='Doces',variable=filtrarDoces, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_doces = Checkbutton(secondFrame, text='Doces',variable=filtrarDoces, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c_doces.grid(row=8, column=1, padx=(0,0), pady=0, sticky='w')
 
-c_refeicoes = Checkbutton(root, text='Sal',variable=filtrarSal, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
+c_refeicoes = Checkbutton(secondFrame, text='Sal',variable=filtrarSal, onvalue=1, offvalue=0, font=("Arial", 14), height=5, width=5)
 c_refeicoes.grid(row=8, column=1, padx=(85,0), pady=0, sticky='w')
 
-btn_obter_data = Button(root, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
+btn_obter_data = Button(secondFrame, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
 btn_obter_data.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
+
 
 criarTabela()
 root.mainloop()
