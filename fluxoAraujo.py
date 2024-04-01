@@ -74,15 +74,15 @@ def criarTabela():
     
 def criarTabelaProduto():
     global tableProduto 
-    tableProduto = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Preço de venda'), show = 'headings')
+    tableProduto = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Preço total'), show = 'headings')
     tableProduto.heading('ID', text = 'ID')
     tableProduto.heading('Nome', text = 'Nome')
-    tableProduto.heading('Preço de venda', text = 'Preço de venda')
-    tableProduto.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    tableProduto.heading('Preço total', text = 'Preço total')
+    tableProduto.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     tableProduto.column('ID', width=80, anchor=CENTER)
     tableProduto.column('Nome', width=80, anchor=CENTER)
-    tableProduto.column('Preço de venda', width=80, anchor=CENTER)
+    tableProduto.column('Preço total', width=80, anchor=CENTER)
 
 
 def atualizarTabela():
@@ -90,7 +90,7 @@ def atualizarTabela():
     
     table = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Unidade', 'CNPJ', 'Total'), show = 'headings')
     table.heading('ID', text = 'ID')
-    table.heading('Nome', text = 'Nome')
+  
     table.heading('Unidade', text = 'Unidade')
     table.heading('CNPJ', text = 'CNPJ')
     table.heading('Total', text = 'Total')
@@ -141,8 +141,27 @@ def inserirNaLista():
 def inserirNaListaProd():
     Produtos = setarDataProd()
     for produto in Produtos:
+        id = produto['ID']
         nome = produto['Produto']
-        tableProduto.insert(parent='', index=0, values=nome)
+        preco = produto['precoTotal']
+        data = (id, nome, preco)
+        tableProduto.insert(parent='', index=0, values=data)
+        
+def obter_objeto():
+    
+    Produtos = setarDataProd()
+    indice = table.selection()
+    if indice:
+        objeto = table.item(indice)["values"]
+        for p in Produtos:
+            if Produtos[5] == objeto[3]:
+                print("Objeto selecionado:", Produtos)
+            else:
+                print(Produtos[5])
+    else :
+        print("Nenhum objeto selecionado.")
+
+
 
 root = Tk()
 root.title("Gerar pedidos de suprimento")
@@ -182,9 +201,16 @@ dtFim = DateEntry(secondFrame, font=('Arial', 12), width=22, height=20, backgrou
 dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
 
 
-btn_obter_data = Button(secondFrame, text="Listar resultados", bg='#C0C0C0', font=("Arial", 16), command=inserirNaListaProd)
-btn_obter_data.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
+btn_obter_data = Button(secondFrame, text="Listar resultados", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
+btn_obter_data.grid(row=3, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
+
+
+btn_obter_selected = Button(secondFrame, text="Selecionar loja", bg='#C0C0C0', font=("Arial", 16), command=obter_objeto)
+btn_obter_selected.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
 
 criarTabela()
 criarTabelaProduto()
+#print(buscarPedidosProdutos('20230101', '20240131'))
+#print(buscarTotalLojas('20230101', '20240131'))
+
 root.mainloop()
