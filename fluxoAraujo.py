@@ -58,29 +58,46 @@ def buscarTotalLojas(data_inicio, data_fim):
 
 def criarTabela():
     global table 
-    table = ttk.Treeview(secondFrame, columns = ('ID', 'Unidade', 'CNPJ', 'Total'), show = 'headings')
+    table = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Unidade', 'CNPJ', 'Total'), show = 'headings')
     table.heading('ID', text = 'ID')
+    table.heading('Nome', text = 'Nome')
     table.heading('Unidade', text = 'Unidade')
     table.heading('CNPJ', text = 'CNPJ')
     table.heading('Total', text = 'Total')
     table.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     table.column('ID', width=80, anchor=CENTER)
+    table.column('Nome', width=80, anchor=CENTER)
     table.column('Unidade', width=300, anchor=CENTER)
     table.column('CNPJ', width=160, anchor=CENTER)
     table.column('Total', width=100, anchor=CENTER)
+    
+def criarTabelaProduto():
+    global tableProduto 
+    tableProduto = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Preço de venda'), show = 'headings')
+    tableProduto.heading('ID', text = 'ID')
+    tableProduto.heading('Nome', text = 'Nome')
+    tableProduto.heading('Preço de venda', text = 'Preço de venda')
+    tableProduto.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+
+    tableProduto.column('ID', width=80, anchor=CENTER)
+    tableProduto.column('Nome', width=80, anchor=CENTER)
+    tableProduto.column('Preço de venda', width=80, anchor=CENTER)
 
 
 def atualizarTabela():
     global table
-    table = ttk.Treeview(secondFrame, columns = ('ID', 'Unidade', 'CNPJ', 'Total'), show = 'headings')
+    
+    table = ttk.Treeview(secondFrame, columns = ('ID', 'Nome', 'Unidade', 'CNPJ', 'Total'), show = 'headings')
     table.heading('ID', text = 'ID')
+    table.heading('Nome', text = 'Nome')
     table.heading('Unidade', text = 'Unidade')
     table.heading('CNPJ', text = 'CNPJ')
     table.heading('Total', text = 'Total')
     table.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     table.column('ID', width=80, anchor=CENTER)
+    table.column('Nome', width=80, anchor=CENTER)
     table.column('Unidade', width=300, anchor=CENTER)
     table.column('CNPJ', width=160, anchor=CENTER)
     table.column('Total', width=100, anchor=CENTER)
@@ -100,19 +117,32 @@ def setarData():
     lojas = buscarTotalLojas(dtInicioFormatada, dtFimFormatada)
     return lojas
 
+def setarDataProd():
+    dataInicio = dtInicio.get()
+    dtInicioFormatada = formatarData(dataInicio)
+    dataFim = dtFim.get()
+    dtFimFormatada = formatarData(dataFim)
+    Produtos = buscarPedidosProdutos(dtInicioFormatada, dtFimFormatada)
+    return Produtos
+
 def inserirNaLista():
+    
     lojas = setarData()
     for loja in lojas:
         id = loja['ID']
+        nome = loja['Nome']
         unidade = loja['Unidade']
         cnpj = loja ['CNPJ']
         total = loja['totalPedidos']
-        data = (id, unidade, cnpj, total)
+        data = (id, nome, unidade, cnpj, total)
         table.insert(parent='', index=0, values=data)
+        
 
-teste = buscarTotalLojas('20230101', '20240101')
-for x in teste:
-    print(x)
+def inserirNaListaProd():
+    Produtos = setarDataProd()
+    for produto in Produtos:
+        nome = produto['Produto']
+        tableProduto.insert(parent='', index=0, values=nome)
 
 root = Tk()
 root.title("Gerar pedidos de suprimento")
@@ -152,8 +182,9 @@ dtFim = DateEntry(secondFrame, font=('Arial', 12), width=22, height=20, backgrou
 dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
 
 
-btn_obter_data = Button(secondFrame, text="Listar resultados", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
-btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
+btn_obter_data = Button(secondFrame, text="Listar resultados", bg='#C0C0C0', font=("Arial", 16), command=inserirNaListaProd)
+btn_obter_data.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
 
 criarTabela()
+criarTabelaProduto()
 root.mainloop()
