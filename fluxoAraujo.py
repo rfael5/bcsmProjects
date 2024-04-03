@@ -32,8 +32,10 @@ def receberDados(query):
 
 def buscarPedidosProdutos(data_inicio, data_fim):
     query = f"""
-        SELECT D.IDX_ENTIDADE AS ID, D.NOME AS Nome, M.DESCRICAO AS Produto, C.FANTASIA AS Unidade, D.CNPJCPF AS CNPJ, D.DATA AS Data, D.TOTALDOCTO AS totalDocumento, M.L_QUANTIDADE AS qtdProduto, M.L_PRECOVENDA AS precoUnitario, M.L_PRECOTOTAL AS precoTotal FROM TPADOCTOPED AS D
-            INNER JOIN TPAMOVTOPED AS M ON PK_DOCTOPED = RDX_DOCTOPED
+        SELECT D.IDX_ENTIDADE AS ID, D.NOME AS Nome, M.DESCRICAO AS Produto, C.FANTASIA AS Unidade, D.TPENTIDADE AS tipoOperacao, 
+        D.CNPJCPF AS CNPJ, D.DATA AS Data, D.TOTALDOCTO AS totalDocumento, M.L_QUANTIDADE AS qtdProduto, 
+        M.L_PRECOVENDA AS precoUnitario, M.L_PRECOTOTAL AS precoTotal FROM TPADOCTOEST AS D
+            INNER JOIN TPAMOVTOEST AS M ON PK_DOCTOEST = RDX_DOCTOEST
             INNER JOIN TPACADASTRO AS C ON D.IDX_ENTIDADE = PK_CADASTRO 
         WHERE DTEVENTO BETWEEN '{data_inicio}' AND '{data_fim}' 
             AND D.NOME IN ('Drogaria Araujo SA', 'Drogaria Araujo Sa')
@@ -140,16 +142,25 @@ def inserirNaLista():
         table.insert(parent='', index=0, values=data)
         
 
+def somarVendasProdutos(produtos):
+    df = pd.DataFrame(produtos)
+    result = df.groupby(['ID', 'CNPJ', 'Produto'])[['precoTotal']].sum().reset_index()
+    resultJson = result.to_json(orient='records')
+    dadosDesserializados = json.loads(resultJson)
+    return dadosDesserializados
+
 def inserirNaListaProd(id, cnpj, nome, preco):
         dataProd = (id, cnpj, nome, preco)
         tableProduto.insert(parent='', index=0, values=dataProd)
         
 def obter_objeto():
+    tableProduto.delete(*tableProduto.get_children())
     Produtos = setarDataProd()
     indice = table.selection()
     if indice:
         objeto = table.item(indice)['values'][3]
-        for p in Produtos:
+        objAgrupado = somarVendasProdutos(Produtos)
+        for p in objAgrupado:
             if str(objeto) == str(p['CNPJ']):
                 inserirNaListaProd(p['ID'], p['CNPJ'], p['Produto'], p['precoTotal'])
     else:
