@@ -76,16 +76,20 @@ def criarTabela():
     
 def criarTabelaProduto():
     global tableProduto 
-    tableProduto = ttk.Treeview(secondFrame, columns = ('ID', 'CNPJ', 'Nome', 'Preço total'), show = 'headings')
+    tableProduto = ttk.Treeview(secondFrame, columns = ('ID', 'CNPJ', 'Nome', 'Preço venda', 'Preço compra', 'Preço total'), show = 'headings')
     tableProduto.heading('ID', text = 'ID')
     tableProduto.heading('CNPJ', text = 'CNPJ')
     tableProduto.heading('Nome', text = 'Nome')
+    tableProduto.heading('Preço venda', text = 'Preço venda')
+    tableProduto.heading('Preço compra', text = 'Preço compra')
     tableProduto.heading('Preço total', text = 'Preço total')
     tableProduto.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     tableProduto.column('ID', width=80, anchor=CENTER)
     tableProduto.column('CNPJ', width=80, anchor=CENTER)
     tableProduto.column('Nome', width=80, anchor=CENTER)
+    tableProduto.column('Preço venda', width=80, anchor=CENTER)
+    tableProduto.column('Preço compra', width=80, anchor=CENTER)
     tableProduto.column('Preço total', width=80, anchor=CENTER)
 
 
@@ -141,6 +145,21 @@ def inserirNaLista():
         data = (id, nome, unidade, cnpj, total)
         table.insert(parent='', index=0, values=data)
         
+def inserirNaListaProd(id, cnpj, nome, precoVenda, precoCompra, precoTotal):
+        dataProd = (id, cnpj, nome, precoVenda, precoCompra, precoTotal)
+        tableProduto.insert(parent='', index=0, values=dataProd)
+        
+def verificarProduto(produto):
+    valorVenda = 0
+    valorCompra = 0
+    if produto['tipoOperacao'] == 'F':  
+        tipoProduto = 'Compra '
+        valorCompra += produto['precoTotal']
+    else:
+        tipoProduto = 'Venda '
+        valorVenda += produto['totalDocumento']
+        
+    return valorVenda
 
 def somarVendasProdutos(produtos):
     df = pd.DataFrame(produtos)
@@ -148,23 +167,35 @@ def somarVendasProdutos(produtos):
     resultJson = result.to_json(orient='records')
     dadosDesserializados = json.loads(resultJson)
     return dadosDesserializados
-
-def inserirNaListaProd(id, cnpj, nome, preco):
-        dataProd = (id, cnpj, nome, preco)
-        tableProduto.insert(parent='', index=0, values=dataProd)
         
 def obter_objeto():
     tableProduto.delete(*tableProduto.get_children())
     Produtos = setarDataProd()
+    valorVenda = 0
+    valorCompra = 0
+    
+    # for p in range(len(Produtos)):
+    #     tipoProduto = verificarProduto(Produtos[p])
+    #     if tipoProduto == 'Venda':
+    #         valorVenda += Produtos[p]['precoTotal']
+    #         print("Valor venda", valorVenda)
+    #     else:
+    #         valorCompra += Produtos[p]['precoTotal']
+    #         print("Valor compra", valorCompra)
+
     indice = table.selection()
     if indice:
         objeto = table.item(indice)['values'][3]
         objAgrupado = somarVendasProdutos(Produtos)
         for p in objAgrupado:
+            tipoProduto = verificarProduto(Produtos[p])
+            
             if str(objeto) == str(p['CNPJ']):
-                inserirNaListaProd(p['ID'], p['CNPJ'], p['Produto'], p['precoTotal'])
+                inserirNaListaProd(p['ID'], p['CNPJ'], p['Produto'], valorVenda, valorCompra, p['precoTotal'])
     else:
         print("Nenhum objeto selecionado.")
+        
+        
 
 root = Tk()
 root.title("Gerar pedidos de suprimento")
