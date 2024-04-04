@@ -149,21 +149,9 @@ def inserirNaListaProd(id, cnpj, nome, precoVenda, precoCompra, precoTotal):
         dataProd = (id, cnpj, nome, precoVenda, precoCompra, precoTotal)
         tableProduto.insert(parent='', index=0, values=dataProd)
         
-def verificarProduto(produto):
-    valorVenda = 0
-    valorCompra = 0
-    if produto['tipoOperacao'] == 'F':  
-        tipoProduto = 'Compra '
-        valorCompra += produto['precoTotal']
-    else:
-        tipoProduto = 'Venda '
-        valorVenda += produto['totalDocumento']
-        
-    return valorVenda
-
-def somarVendasProdutos(produtos):
+def AgruparProdutos(produtos):
     df = pd.DataFrame(produtos)
-    result = df.groupby(['ID', 'CNPJ', 'Produto'])[['precoTotal']].sum().reset_index()
+    result = df.groupby(['ID', 'CNPJ', 'Produto','tipoOperacao'])[['precoTotal']].sum().reset_index()
     resultJson = result.to_json(orient='records')
     dadosDesserializados = json.loads(resultJson)
     return dadosDesserializados
@@ -171,31 +159,43 @@ def somarVendasProdutos(produtos):
 def obter_objeto():
     tableProduto.delete(*tableProduto.get_children())
     Produtos = setarDataProd()
-    valorVenda = 0
-    valorCompra = 0
-    
-    # for p in range(len(Produtos)):
-    #     tipoProduto = verificarProduto(Produtos[p])
-    #     if tipoProduto == 'Venda':
-    #         valorVenda += Produtos[p]['precoTotal']
-    #         print("Valor venda", valorVenda)
-    #     else:
-    #         valorCompra += Produtos[p]['precoTotal']
-    #         print("Valor compra", valorCompra)
+
+    soma_produtos = {}
 
     indice = table.selection()
     if indice:
-        objeto = table.item(indice)['values'][3]
-        objAgrupado = somarVendasProdutos(Produtos)
+        objeto = table.item(indice)["values"]
+        objAgrupado = AgruparProdutos(Produtos)
+        
         for p in objAgrupado:
-            tipoProduto = verificarProduto(Produtos[p])
-            
-            if str(objeto) == str(p['CNPJ']):
-                inserirNaListaProd(p['ID'], p['CNPJ'], p['Produto'], valorVenda, valorCompra, p['precoTotal'])
+            if str(objeto[3]) == str(p['CNPJ']):
+                chave = (p['ID'], p['CNPJ'], p['Produto'])
+                if chave not in soma_produtos:
+                    soma_produtos[chave] = {'valorVenda': 1, 'valorCompra': 1}
+                    
+                if p['tipoOperacao'] == 'F':  
+                    soma_produtos[chave]['valorVenda'] += p['precoTotal']
+                elif p['tipoOperacao'] == 'C':  
+                    soma_produtos[chave]['valorCompra'] += p['precoTotal']
+
+
+        for chave, valores in soma_produtos.items():
+            id, cnpj, produto = chave
+            valor_venda = valores['valorVenda']
+            valor_compra = valores['valorCompra']
+            total = valor_venda - valor_compra
+            inserirNaListaProd(id, cnpj, produto, valor_venda, valor_compra, total)
     else:
         print("Nenhum objeto selecionado.")
-        
-        
+    
+    
+def somarVendasCompras(produtos):
+    df = pd.DataFrame(produtos)
+    result = df.groupby(['ID', 'CNPJ', 'Produto','tipoOperacao'])[['precoTotal']].sum().reset_index()
+    resultJson = result.to_json(orient='records')
+    dadosDesserializados = json.loads(resultJson)
+    return dadosDesserializados
+    
 
 root = Tk()
 root.title("Gerar pedidos de suprimento")
