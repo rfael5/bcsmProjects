@@ -169,32 +169,30 @@ def obter_objeto():
         
         for p in objAgrupado:
             if str(objeto[3]) == str(p['CNPJ']):
+                
                 chave = (p['ID'], p['CNPJ'], p['Produto'])
+                
                 if chave not in soma_produtos:
-                    soma_produtos[chave] = {'valorVenda': 1, 'valorCompra': 1}
+                    soma_produtos[chave] = {'valorVenda': 0, 'valorCompra': 0}
                     
                 if p['tipoOperacao'] == 'F':  
                     soma_produtos[chave]['valorVenda'] += p['precoTotal']
-                elif p['tipoOperacao'] == 'C':  
+                    # print("VALORVENDAAAAVVV", soma_produtos[chave]['valorVenda'])
+                    # print("-----", p['precoTotal'])
+                else:  
                     soma_produtos[chave]['valorCompra'] += p['precoTotal']
-
+                    # print("VALORCOMPRAAA", soma_produtos[chave]['valorCompra'])
+                    # # print("++++++", p['precoTotal'])
 
         for chave, valores in soma_produtos.items():
             id, cnpj, produto = chave
             valor_venda = valores['valorVenda']
             valor_compra = valores['valorCompra']
             total = valor_venda - valor_compra
+            print(valores['valorVenda'], valores['valorCompra'], total)
             inserirNaListaProd(id, cnpj, produto, valor_venda, valor_compra, total)
     else:
         print("Nenhum objeto selecionado.")
-    
-    
-def somarVendasCompras(produtos):
-    df = pd.DataFrame(produtos)
-    result = df.groupby(['ID', 'CNPJ', 'Produto','tipoOperacao'])[['precoTotal']].sum().reset_index()
-    resultJson = result.to_json(orient='records')
-    dadosDesserializados = json.loads(resultJson)
-    return dadosDesserializados
     
 
 root = Tk()
