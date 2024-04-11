@@ -1,0 +1,123 @@
+/* styles.css */
+
+/* Add styles here to customize the appearance of your app */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+}
+
+#data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#data h2 {
+    margin: 10px 0;
+    padding: 20px;
+}
+
+#data input {
+    margin: 10px 0;
+}
+
+#gerarLista {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#gerarLista h2, #gerarLista select{
+    margin: 10px 0;
+    padding: 10px;
+    width: 300px;
+}
+
+#btn {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#table {
+
+    margin-top: 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#table h2 {
+    margin: 5rem 0;
+    padding: 20px;
+}
+
+#table table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#table th, #table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#table th {
+    background-color: #f2f2f2;
+}
+
+#table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#table tr:hover {
+    background-color: #e6e6e6;
+}
+
+#selecionarProdutos{
+    text-align: center;
+}
+
+#selecionarProdutos h2{
+    margin: 10px 0;
+    padding: 20px;
+}
+
+#selecionarProdutos input{
+    margin: 10px 0;
+}
+
+#selecionarProdutos button{
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#btnSelecionarProdutos{
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <link href="./styles.css" rel="stylesheet">
+  <title>Gerar pedidos de suprimento</title>
+</head>
+
+<body>
+  <h1>Selecione abaixo o período de tempo para o qual você quer gerar a lista de pedidos de suprimento.</h1>
+  <div id="data">
+    <h2>De:</h2>
+    <input type="date" id="dataInicio" name="dataInicio">
+    <h2>Ate:</h2>
+    <input type="date" id="dataFim" name="dataFim">
+    <h2>Incluir linha de produção?</h2>
+    <input type="checkbox" id="incluirLinhaProducao">
+  </div>
+  <div id="gerarLista">
+    <h2>Selecione o tipo de produtos:</h2>
+    <select>
+      <option value="Todos">Todos</option>
+      <option value="Sal">Sal</option>
+      <option value="Doce">Doce</option>
+      <option value="Refeição">Refeição</option>
+      <option value="Confeitaria">Confeitaria</option>
+      <option value="Canapé">Canapé</option>
+    </select>
+    <button id="btn">Gerar lista</button>
+  </div>
+
+  </div>
+  <div id="table">
+    <h2>Produtos acabados</h2>
+    <table id="tableAcabados"></table>
+    <h2>Semi-acabados</h2>
+    <table id="tableSemiAcabados"></table>
+  </div>
+
+  <div id="selecionarProdutos">
+    <h2>Selecione os produtos que você deseja filtrar da lista</h2>
+    <input type="checkbox" id="checarTodos">
+    <label for="checarTodos">Todos</label>
+    <input type="checkbox" id="checarSal">
+    <label for="checarSal">Sal</label>
+    <input type="checkbox" id="checarDoces">
+    <label for="checarDoces">Doces</label>
+    <input type="checkbox" id="checarRefeicoes">
+    <label for="checarRefeicoes">Refeições</label><br>
+    <input type="checkbox" id="checarConfeitaria">
+    <label for="checarConfeitaria">Confeitaria</label>
+    <input type="checkbox" id="checarCanape">
+    <label for="checarCanape">Canape</label><br>
+    <h2>Qual lista de pedido de suprimento deseja criar?</h2>
+    <input type="radio" id="radioAcabados" name="radio" value="acabados">
+    <label for="radioAcabados">Acabados</label>
+    <input type="radio" id="radioSemiAcabados" name="radio" value="semiAcabados">
+    <label for="radioSemiAcabados">Semi-acabados</label><br>
+    <button id="btnGerarPlanilhas">Gerar planilhas</button>
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+
+</html>
