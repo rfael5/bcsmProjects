@@ -16,10 +16,10 @@ from random import choice
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
     "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=192.168.1.137;" +
+    "SERVER=192.168.1.43;" +
     "DATABASE=SOUTTOMAYOR;" +
     "UID=Sa;" +
-    "PWD=P@ssw0rd2023"
+    "PWD=P@ssw0rd2023@#$"
 )
 
 engine = create_engine(conexao, pool_pre_ping=True)
@@ -238,6 +238,7 @@ def converterPJson(lista):
 
 def inserirNaLista():
     lojas = setarData()
+    lista_lojas = []
     for loja in lojas:
         id = loja['ID']
         nome = loja['Nome']
@@ -257,7 +258,9 @@ def inserirNaLista():
             compra = 0
         total = venda - compra
         data = (id, nome, unidade, cnpj, compra, venda, round(total, 2))
+        lista_lojas.append(data)
         table.insert(parent='', index=0, values=data)
+    gerarPlanilha(lista_lojas)
 
 def verificarExistenciaColuna(row):
     if 'qtdCompra' not in row:
@@ -279,10 +282,7 @@ def checarColunas(lista):
             produto['valorCompra'] = 0
         if 'valorVenda' not in produto:
             produto['valorVenda'] = 0
-    
-    for x in lista:
-        print(x)
-    # return lista
+
 
 def somarVendasProdutos(produtos):
     checarColunas(produtos)
@@ -385,7 +385,7 @@ def gerarArquivoExcel(tipoArquivo, listaProdutos):
     print(f"Arquivo salvo em: {file_path}")
 
 # gerar planilha
-def gerarPlanilha():
+def gerarPlanilha(lista_lojas):
     lojas = setarData()
     if lojas == None:
         messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
@@ -393,9 +393,7 @@ def gerarPlanilha():
         messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo') 
     else:
         listaLojas = criarListaLojas(lojas)
-        gerarArquivoExcel('Planilha araujo', listaLojas)
-
-       
+        gerarArquivoExcel('Planilha araujo', lista_lojas)
 
 
 root = Tk()
