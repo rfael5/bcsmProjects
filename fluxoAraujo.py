@@ -333,6 +333,70 @@ def obter_objeto():
             inserirNaListaProd(p)
     else:
         print("Nenhum objeto selecionado.")
+        
+
+#definir o formato da tabela ------------------------
+def formatarTabela(caminho):
+    wb = load_workbook(caminho)
+    ws = wb.active
+    
+    
+    ws['A1'] = 'ID'
+    ws['B1'] = 'Nome'
+    ws['C1'] = 'Unidade'
+    ws['D1'] = 'Cnpj'
+    ws['E1'] = 'Compra'
+    ws['F1'] = 'Venda'
+    ws['G1'] = 'Total'
+        
+    for cell in ws[1]:
+            cell.fill = PatternFill(start_color="FDDA0D", end_color="FDDA0D", fill_type="solid")
+    for cell in ws['E'][1:]:
+            cell.fill = PatternFill(start_color="5D8AA8", end_color="5D8AA8", fill_type="solid")
+        
+    ws.column_dimensions['A'].width = 10
+    ws.column_dimensions['B'].width = 40
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 10
+        
+    wb.save(caminho)
+  
+# salvar o arquivo
+def gerarArquivoExcel(tipoArquivo, listaProdutos):
+    root = Tk()
+    root.withdraw()
+
+    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
+                                               filetypes=[("Arquivos Excel", "*.xlsx")],
+                                               title="Salvar Arquivo Excel",
+                                               initialfile=f"{tipoArquivo}")
+
+    if not file_path:
+        print("Operação cancelada pelo usuário.")
+        return
+
+    if not file_path.endswith(".xlsx"):
+        file_path += ".xlsx"
+        
+    formatoTabela = pd.DataFrame(listaProdutos)
+    formatoTabela.to_excel(file_path, index=False)
+    formatarTabela(file_path)
+    print(f"Arquivo salvo em: {file_path}")
+
+# gerar planilha
+def gerarPlanilha():
+    lojas = setarData()
+    if lojas == None:
+        messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
+    elif lojas == 0:
+        messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo') 
+    else:
+        listaLojas = criarListaLojas(lojas)
+        gerarArquivoExcel('Planilha araujo', listaLojas)
+
+       
+
 
 root = Tk()
 root.title("Gerar pedidos de suprimento")
@@ -378,6 +442,9 @@ btn_obter_data.grid(row=3, column=0, columnspan=2, padx=(80, 0), pady=1, sticky=
 
 btn_obter_selected = Button(secondFrame, text="Selecionar loja", bg='#C0C0C0', font=("Arial", 16), command=obter_objeto)
 btn_obter_selected.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=1, sticky='nsew')
+
+btn_obter_data = Button(secondFrame, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
+btn_obter_data.grid(row=16, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 criarTabela()
 criarTabelaProduto()
