@@ -1,1 +1,2 @@
-Trabalhos desenvolvidos pela equipe de T.I. no buffet CELIA SOUTTO MAYOR
+Projetos desenvolvidos no Buffet Célia Soutto Mayor
+
