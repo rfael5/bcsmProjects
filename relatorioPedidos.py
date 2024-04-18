@@ -16,10 +16,10 @@ from random import choice
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
     "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=192.168.1.137;" +
+    "SERVER=192.168.1.43;" +
     "DATABASE=SOUTTOMAYOR;" +
     "UID=Sa;" +
-    "PWD=P@ssw0rd2023"
+    "PWD=P@ssw0rd2023@#$"
 )
 
 engine = create_engine(conexao, pool_pre_ping=True)
@@ -805,7 +805,13 @@ c_confeitaria.grid(row=12, column=1, padx=10, sticky='w')
 txt_tipo_planilha = Label(secondFrame, text="Qual lista de pedido de suprimento você quer gerar?", font=("Arial", 14))
 txt_tipo_planilha.grid(row=13, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 
+
+
+radiobutton_variable = IntVar()
+
 radiobutton_variable = IntVar(value=1)
+
+
 radio_acabados = Radiobutton(secondFrame, text="Composição acabados", font=("Arial", 14), variable = radiobutton_variable, value = 1)
 radio_acabados.grid(row = 14, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 radio_semiacabados = Radiobutton(secondFrame, text="Composição semi-acabados", font=("Arial", 14), variable = radiobutton_variable, value = 2)
