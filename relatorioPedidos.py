@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from tkinter import *
 from tkinter import ttk
 from tkcalendar import DateEntry
@@ -12,6 +12,15 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from random import choice
+
+# conexao = (
+#     "mssql+pyodbc:///?odbc_connect=" + 
+#     "DRIVER={ODBC Driver 17 for SQL Server};" +
+#     "SERVER=192.168.1.137;" +
+#     "DATABASE=SOUTTOMAYOR;" +
+#     "UID=Sa;" +
+#     "PWD=P@ssw0rd2023"
+# )
 
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
@@ -33,6 +42,12 @@ def formatarData(data):
     data_formatada = data_objeto.strftime('%Y%m%d')
     return data_formatada
 
+def formatarDataPedido(data):
+    milliseconds_since_epoch = data
+    seconds_since_epoch = milliseconds_since_epoch / 1000
+    date_object = datetime.fromtimestamp(seconds_since_epoch, timezone.utc)
+    formatted_date = date_object.strftime('%d/%m/%Y')
+    return formatted_date 
 
 def setarData():
     dataInicio = dtInicio.get()
@@ -42,6 +57,15 @@ def setarData():
     if dtInicioFormatada < dtFimFormatada:
         produtosComposicao = getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
         composicaoSemiAcabados = getCompSemiAcabados(dtInicioFormatada, dtFimFormatada)
+        
+        for x in produtosComposicao:
+            data_pedido = formatarDataPedido(x['dataPedido'])
+            data_evento = formatarDataPedido(x['dataEvento'])
+            data_previsao = formatarDataPedido(x['dataPrevisao'])
+            #teste = formatarDataPedido(dtInicioFormatada)
+            if(dataInicio < data_pedido < dataFim):
+                print(f"Data pedido: {data_pedido} ---- Data evento: {data_evento} ---- Data previsão: {data_previsao}")
+                print(x)
                 
         if len(produtosComposicao) == 0:
             tamanhoLista = 0
@@ -72,7 +96,7 @@ def receberDados(query):
 def getProdutosComposicao(dataInicio, dataFim):
     queryProdutosComposicao =  f"""
     select 
-        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DTEVENTO as dataEvento, p.PK_MOVTOPED as idMovtoped, 
+        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
         a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
         c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
@@ -90,11 +114,11 @@ def getProdutosComposicao(dataInicio, dataFim):
         and e.SITUACAO = 'B'
         and c.OPSUPRIMENTOMP = 'S'
     or e.TPDOCTO = 'OR' 
-        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DTEVENTO between '{dataInicio}' and '{dataFim}'
         and e.SITUACAO = 'V'
         and c.OPSUPRIMENTOMP = 'S'
     or e.TPDOCTO = 'OR' 
-        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DTEVENTO between '{dataInicio}' and '{dataFim}'
         and e.SITUACAO = 'B'
         and c.OPSUPRIMENTOMP = 'S'
     order by p.DESCRICAO
@@ -458,8 +482,7 @@ def unirListasComposicao(acabados, semiAcabados):
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
     return dadosOrdenados   
-    
-    
+
 
 def somarProdutosEvento(produtosComposicao):
     dfComposicao = pd.DataFrame(produtosComposicao)
@@ -717,7 +740,13 @@ root.title("Gerar pedidos de suprimento")
 
 root.geometry("1150x800")
 
-mainFrame = Frame(root)
+notebook = ttk.Notebook(root)
+notebook.pack(fill=BOTH, expand=True)
+
+page1 = Frame(notebook)
+notebook.add(page1, text='Página 1')
+
+mainFrame = Frame(page1)
 mainFrame.pack(fill=BOTH, expand=1)
 
 canvas = Canvas(mainFrame)
@@ -805,13 +834,7 @@ c_confeitaria.grid(row=12, column=1, padx=10, sticky='w')
 txt_tipo_planilha = Label(secondFrame, text="Qual lista de pedido de suprimento você quer gerar?", font=("Arial", 14))
 txt_tipo_planilha.grid(row=13, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 
-
-
-radiobutton_variable = IntVar()
-
 radiobutton_variable = IntVar(value=1)
-
-
 radio_acabados = Radiobutton(secondFrame, text="Composição acabados", font=("Arial", 14), variable = radiobutton_variable, value = 1)
 radio_acabados.grid(row = 14, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 radio_semiacabados = Radiobutton(secondFrame, text="Composição semi-acabados", font=("Arial", 14), variable = radiobutton_variable, value = 2)
@@ -819,6 +842,12 @@ radio_semiacabados.grid(row = 15, columnspan=2, padx=(150,0), pady=2, sticky="ns
 
 btn_obter_data = Button(secondFrame, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
 btn_obter_data.grid(row=16, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+
+page2 = Frame(notebook)
+notebook.add(page2,text='Página 2')
+
+lb1 = Label(page2, text='I am page 2')
+lb1.pack(pady=20)
 
 criarTabela()
 root.mainloop()
