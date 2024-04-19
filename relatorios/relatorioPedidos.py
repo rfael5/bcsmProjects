@@ -1,17 +1,22 @@
+from tkinter import *
+from tkinter import ttk
 from tkinter import filedialog
+from tkcalendar import DateEntry
+from tkinter import messagebox
+
 from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import json
 from datetime import datetime, timezone
-from tkinter import *
-from tkinter import ttk
-from tkcalendar import DateEntry
-from tkinter import messagebox
+
+
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
+
 from random import choice
+import math
 
 # conexao = (
 #     "mssql+pyodbc:///?odbc_connect=" + 
@@ -63,9 +68,10 @@ def setarData():
             data_evento = formatarDataPedido(x['dataEvento'])
             data_previsao = formatarDataPedido(x['dataPrevisao'])
             #teste = formatarDataPedido(dtInicioFormatada)
-            if(dataInicio < data_pedido < dataFim):
-                print(f"Data pedido: {data_pedido} ---- Data evento: {data_evento} ---- Data previsão: {data_previsao}")
-                print(x)
+            # if(dataInicio < data_pedido < dataFim):
+                #print(f"Data pedido: {data_pedido} ---- Data evento: {data_evento} ---- Data previsão: {data_previsao}")
+                #print(x)
+                
                 
         if len(produtosComposicao) == 0:
             tamanhoLista = 0
@@ -688,7 +694,7 @@ def inserirNaLista():
                 linha = p['linha']
                 estoque = p['estoque']
                 unidadeEstoque = p['unidadeEstoque']
-                totalProducao = p['totalProducao']
+                totalProducao = math.ceil(p['totalProducao'])
                 unidade = p['unidade']
                 data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
                 if p['produtoAcabado'] == True:
