@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from tkinter import *
 from tkinter import ttk
 from tkcalendar import DateEntry
@@ -12,6 +12,15 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from random import choice
+
+# conexao = (
+#     "mssql+pyodbc:///?odbc_connect=" + 
+#     "DRIVER={ODBC Driver 17 for SQL Server};" +
+#     "SERVER=192.168.1.137;" +
+#     "DATABASE=SOUTTOMAYOR;" +
+#     "UID=Sa;" +
+#     "PWD=P@ssw0rd2023"
+# )
 
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
@@ -32,6 +41,13 @@ def formatarData(data):
     data_objeto = datetime.strptime(data, '%d/%m/%Y')
     data_formatada = data_objeto.strftime('%Y%m%d')
     return data_formatada
+
+def formatarDataPedido(data):
+    milliseconds_since_epoch = data
+    seconds_since_epoch = milliseconds_since_epoch / 1000
+    date_object = datetime.fromtimestamp(seconds_since_epoch, timezone.utc)
+    formatted_date = date_object.strftime('%d/%m/%Y')
+    return formatted_date 
 
 
 def setarData():
@@ -56,12 +72,41 @@ def setarData():
             mp_acabados = somarProdutosEvento(ajustesAplicados)
             mp_semiAcabados = criarDictSemiAcabados(mp_acabados, composicaoSemiAcabados, estoque)
             produtos = unirListasComposicao(mp_acabados, mp_semiAcabados)
-            
-            return produtos
+            return produtos 
     else:
         criarTabela()
         return None
-        
+
+def setarDataPedidosMeioSemana():
+    dataInicio = dtInicio.get()
+    dtInicioFormatada = formatarData(dataInicio)
+    dataFim = dtFim.get()
+    dtFimFormatada = formatarData(dataFim)
+    
+    global pedidosMeioSemana
+    pedidosMeioSemana = getPedidosMeioSemana(dtInicioFormatada, dtFimFormatada)
+    semiacabados = getSemiAcabadosMeioSemana(dtInicioFormatada, dtFimFormatada)
+    ajustes = getAjustes(dtInicioFormatada, dtFimFormatada)
+    estoque = getEstoque()
+    produtosQtdAjustada = calcularQtdProducao(pedidosMeioSemana)
+    ajustesAplicados =aplicarAjustes(produtosQtdAjustada, ajustes)
+    adicionarEstoque(ajustesAplicados, estoque)
+    mp_acabados = somarProdutosEvento(ajustesAplicados)
+    mp_semiAcabados = criarDictSemiAcabados(mp_acabados, semiacabados, estoque)
+    produtos = unirListasComposicao(mp_acabados, mp_semiAcabados)
+    
+    return produtos
+
+def filtrarPedidosMeioSemana(dtInicio, dtFim, listaPedidos):
+    pedidosMeioSemana = []
+    for x in listaPedidos:
+            data_pedido = formatarDataPedido(x['dataPedido'])
+            data_evento = formatarDataPedido(x['dataEvento'])
+            data_previsao = formatarDataPedido(x['dataPrevisao'])
+            #teste = formatarDataPedido(dtInicioFormatada)
+            if(dataInicio < data_pedido < dataFim and data_previsao < dataFim):
+                pedidosMeioSemana.append(x)
+    return pedidosMeioSemana
 
 def receberDados(query):
     response = pd.read_sql_query(query, engine)
@@ -72,7 +117,7 @@ def receberDados(query):
 def getProdutosComposicao(dataInicio, dataFim):
     queryProdutosComposicao =  f"""
     select 
-        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DTEVENTO as dataEvento, p.PK_MOVTOPED as idMovtoped, 
+        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
         a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
         c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
@@ -90,17 +135,59 @@ def getProdutosComposicao(dataInicio, dataFim):
         and e.SITUACAO = 'B'
         and c.OPSUPRIMENTOMP = 'S'
     or e.TPDOCTO = 'OR' 
-        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DTEVENTO between '{dataInicio}' and '{dataFim}'
         and e.SITUACAO = 'V'
         and c.OPSUPRIMENTOMP = 'S'
     or e.TPDOCTO = 'OR' 
-        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DTEVENTO between '{dataInicio}' and '{dataFim}'
         and e.SITUACAO = 'B'
         and c.OPSUPRIMENTOMP = 'S'
     order by p.DESCRICAO
     """
     produtosComposicao = receberDados(queryProdutosComposicao)
     return produtosComposicao
+
+def getPedidosMeioSemana(dataInicio, dataFim):
+    queryPedidosMeioSemana = f"""
+    select 
+        e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
+        ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
+        a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
+        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
+    from TPAPRODCOMPOSICAO as a 
+        inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
+        inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
+        inner join TPADOCTOPED as e on p.RDX_DOCTOPED = e.PK_DOCTOPED
+        inner join TPAPRODUTO as ca on p.IDX_PRODUTO = ca.PK_PRODUTO
+    where e.TPDOCTO = 'EC' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DATA > '{dataInicio}'
+        and e.DTPREVISAO < '{dataFim}'
+        and e.SITUACAO = 'Z'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'EC' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DATA > '{dataInicio}'
+        and e.DTPREVISAO < '{dataFim}'
+        and e.SITUACAO = 'B'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DATA > '{dataInicio}'
+        and e.DTPREVISAO < '{dataFim}'
+        and e.SITUACAO = 'V'
+        and c.OPSUPRIMENTOMP = 'S'
+    or e.TPDOCTO = 'OR' 
+        and e.DTPREVISAO between '{dataInicio}' and '{dataFim}'
+        and e.DATA > '{dataInicio}'
+        and e.DTPREVISAO < '{dataFim}'
+        and e.SITUACAO = 'B'
+        and c.OPSUPRIMENTOMP = 'S'
+    order by p.DESCRICAO
+    """
+    
+    pedidosMeioSemana = receberDados(queryPedidosMeioSemana)
+    return pedidosMeioSemana
 
 def getCompSemiAcabados(dataInicio, dataFim):
     queryComposicao = f"""
@@ -139,6 +226,47 @@ ORDER BY
     composicaoSemiAcabados = receberDados(queryComposicao)
     return composicaoSemiAcabados
 
+def getSemiAcabadosMeioSemana(dataInicio, dataFim):
+    query = f"""
+    SELECT 
+        C.IDX_PRODUTO as idProduto, 
+        P.DESCRICAO as nomeProdutoComposicao, 
+        C.UN as unidadeProdutoComposicao, 
+        C.QUANTIDADE as qtdProdutoComposicao, 
+        P.IDX_LINHA as classificacao, 
+        P2.PK_PRODUTO as idProdutoAcabado, 
+        P2.DESCRICAO as nomeProdutoAcabado, 
+        P2.RENDIMENTO1 AS rendimento 
+    FROM 
+        TPAPRODCOMPOSICAO AS C
+        INNER JOIN TPAPRODUTO AS P ON C.IDX_PRODUTO = P.PK_PRODUTO
+        INNER JOIN TPAPRODUTO AS P2 ON C.RDX_PRODUTO = P2.PK_PRODUTO
+    WHERE 
+    C.RDX_PRODUTO IN  (
+        SELECT 
+            DISTINCT c.PK_PRODUTO
+        FROM 
+            TPAPRODCOMPOSICAO as a 
+            INNER JOIN TPAPRODUTO as c ON a.IDX_PRODUTO = c.PK_PRODUTO
+            INNER JOIN TPAMOVTOPED as p ON a.RDX_PRODUTO = p.IDX_PRODUTO
+            INNER JOIN TPADOCTOPED as e ON p.RDX_DOCTOPED = e.PK_DOCTOPED
+            INNER JOIN TPAPRODUTO as ca ON p.IDX_PRODUTO = ca.PK_PRODUTO
+        WHERE 
+            e.DTPREVISAO BETWEEN '{dataInicio}' AND '{dataFim}'
+            and e.DATA > '{dataInicio}'
+			and e.DTPREVISAO < '{dataFim}'
+            AND e.SITUACAO IN ('Z', 'B', 'V') -- Verifica se SITUACAO está em um conjunto de valores
+            AND c.OPSUPRIMENTOMP = 'S'
+            AND (e.TPDOCTO = 'EC' OR e.TPDOCTO = 'OR') -- Verifica se TPDOCTO é 'EC' ou 'OR'
+    )
+        ORDER BY 
+    P.DESCRICAO;
+    """
+    
+    composicaoSemiAcabados = receberDados(query)
+    return composicaoSemiAcabados
+    
+
 def getAjustes(dataInicio, dataFim):
     queryAjustes = f"""
     select A.IDX_MOVTOPED AS idMovtoped, V.IDX_PRODUTO AS idProduto, V.DESCRICAO AS nomeProduto, A.QUANTIDADE AS ajuste, A.PRECO AS precoAjuste from TPAAJUSTEPEDITEM AS A 
@@ -162,7 +290,7 @@ def getAjustes(dataInicio, dataFim):
         and E.SITUACAO = 'B'
         and P.OPSUPRIMENTOMP = 'S'
     ORDER BY V.DESCRICAO
-    """ 
+    """
     ajustes = receberDados(queryAjustes)
     return ajustes
 
@@ -287,7 +415,6 @@ def formatarListaSemiAcabados(lista, estoque):
     return result
     
     
-
 def calcularQtdProducao(produtosComposicao):
     for e in produtosComposicao:
         if e['unidadeAcabado'] == 'PP':
@@ -458,8 +585,7 @@ def unirListasComposicao(acabados, semiAcabados):
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
     return dadosOrdenados   
-    
-    
+
 
 def somarProdutosEvento(produtosComposicao):
     dfComposicao = pd.DataFrame(produtosComposicao)
@@ -530,6 +656,72 @@ def separarProdutosEvento(listaProdutos):
         messagebox.showinfo("Seleção Inválida", "Selecione o tipo de planilha a ser gerado.")
         return None
 
+def criarTabelaTeste():
+    global tabelaTeste 
+    tabelaTeste = ttk.Treeview(page2, columns = ('Id', 'Cliente', 'Produto', 'Linha', 'Classificação', 'Data Pedido', 'Data Previsão'), show='headings')
+    tabelaTeste.heading('Id', text='Id')
+    tabelaTeste.heading('Cliente', text='Cliente')
+    tabelaTeste.heading('Produto', text='Produto')
+    tabelaTeste.heading('Linha', text='Linha')
+    tabelaTeste.heading('Classificação', text='Classificação')
+    tabelaTeste.heading('Data Pedido', text='Data Pedido')
+    tabelaTeste.heading('Data Previsão', text='Data Previsão')
+    tabelaTeste.grid(row=2, column=0, columnspan=2, padx=(80,0), pady=10, sticky='nsew')
+
+    tabelaTeste.column('Id', width=80, anchor=CENTER)
+    tabelaTeste.column('Cliente', width=80, anchor=CENTER)
+    tabelaTeste.column('Produto', width=80, anchor=CENTER)
+    tabelaTeste.column('Linha', width=80, anchor=CENTER)
+    tabelaTeste.column('Classificação', width=80, anchor=CENTER)
+    tabelaTeste.column('Data Pedido', width=80, anchor=CENTER)
+    tabelaTeste.column('Data Previsão', width=80, anchor=CENTER)
+    
+    data = (1, 'col1', 'col2', 'col3')
+    
+    tabelaTeste.insert(parent='', index=0, values=data)
+
+def criarTabelaMeioSemana():
+    global tabelaSemana
+    tabelaSemana = ttk.Treeview(page2, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    tabelaSemana.heading('ID', text = 'ID')
+    tabelaSemana.heading('Produto', text = 'Produto')
+    tabelaSemana.heading('Classificacao', text = 'Classificacao')
+    tabelaSemana.heading('Linha', text = 'Linha')
+    tabelaSemana.heading('Estoque', text = 'Estoque')
+    tabelaSemana.heading('Un. Estoque', text = 'Un. Estoque')
+    tabelaSemana.heading('Qtd. Producao', text = 'Qtd. Producao')
+    tabelaSemana.heading('Unidade', text = 'Unidade')
+    tabelaSemana.grid(row=2, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+
+    tabelaSemana.column('ID', width=80, anchor=CENTER)
+    tabelaSemana.column('Produto', width=300, anchor=CENTER)
+    tabelaSemana.column('Classificacao', width=160, anchor=CENTER)
+    tabelaSemana.column('Linha', width=100, anchor=CENTER)
+    tabelaSemana.column('Estoque', width=80, anchor=CENTER)
+    tabelaSemana.column('Un. Estoque', width=80, anchor=CENTER)
+    tabelaSemana.column('Qtd. Producao', width=100, anchor=CENTER)
+    tabelaSemana.column('Unidade', width=80, anchor=CENTER)
+    
+    global tabelaSemana_semi
+    tabelaSemana_semi = ttk.Treeview(page2, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
+    tabelaSemana_semi.heading('ID', text = 'ID')
+    tabelaSemana_semi.heading('Produto', text = 'Produto')
+    tabelaSemana_semi.heading('Classificacao', text = 'Classificacao')
+    tabelaSemana_semi.heading('Linha', text = 'Linha')
+    tabelaSemana_semi.heading('Estoque', text = 'Estoque')
+    tabelaSemana_semi.heading('Un. Estoque', text = 'Un. Estoque')
+    tabelaSemana_semi.heading('Qtd. Producao', text = 'Qtd. Producao')
+    tabelaSemana_semi.heading('Unidade', text = 'Unidade')
+    tabelaSemana_semi.grid(row=3, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+
+    tabelaSemana_semi.column('ID', width=80, anchor=CENTER)
+    tabelaSemana_semi.column('Produto', width=300, anchor=CENTER)
+    tabelaSemana_semi.column('Classificacao', width=160, anchor=CENTER)
+    tabelaSemana_semi.column('Linha', width=100, anchor=CENTER)
+    tabelaSemana_semi.column('Estoque', width=80, anchor=CENTER)
+    tabelaSemana_semi.column('Un. Estoque', width=80, anchor=CENTER)
+    tabelaSemana_semi.column('Qtd. Producao', width=100, anchor=CENTER)
+    tabelaSemana_semi.column('Unidade', width=80, anchor=CENTER)
 
 def criarTabela():
     global table 
@@ -640,12 +832,94 @@ def selecionarOpcao(event):
     
     print(f"Opção selecionada: {valorSelecionado}")
 
+def formatarDataPedido(data):
+    milliseconds_since_epoch = data
+    seconds_since_epoch = milliseconds_since_epoch / 1000
+    date_object = datetime.fromtimestamp(seconds_since_epoch, timezone.utc)
+    formatted_date = date_object.strftime('%d/%m/%Y')
+    return formatted_date
+
+def verTodosEventos():
+    #print('oi')
+    indice = tabelaSemana.selection()
+    if indice:
+        produto = tabelaSemana.item(indice)['values'][0]
+        produtosFiltrados = list(filter(lambda evento:int(evento['idProdutoComposicao']) == int(produto), pedidosMeioSemana))
+        for x in produtosFiltrados:
+            print(x)
+        abrirOutraJanela(produtosFiltrados)
+
+def abrirOutraJanela(produtosFiltrados):
+    nova_janela = Toplevel(root)  # Cria uma nova janela
+    nova_janela.title("Nova Janela")
+    nova_janela.geometry("600x800")
+    produto_selecionado = produtosFiltrados[0]['nomeProdutoComposicao']
+    # Adicione widgets ou conteúdo à nova janela aqui
+    label = Label(nova_janela, text=f'{produto_selecionado}')
+    label.grid(padx=20, pady=20)
+    
+    criarTabelaEvento(nova_janela)
+    for x in produtosFiltrados:
+        cliente = x['nomeEvento']
+        produto = x['nomeProdutoAcabado']
+        dataPedido = formatarDataPedido(x['dataPedido'])
+        dataPrevisao = formatarDataPedido(x['dataPrevisao'])
+        qtdEvento = x['qtdProdutoEvento']
+        unidade = x['unidadeAcabado']
+        data = (cliente, produto, dataPedido, dataPrevisao, qtdEvento, unidade)
+        tabelaEventos.insert(parent='', index=0, values=data)
+    
+
+def criarTabelaEvento(nova_janela):
+    global tabelaEventos
+    tabelaEventos = ttk.Treeview(nova_janela, columns = ('Cliente', 'Produto', 'Data pedido', 'Data previsão', 'Qtd Evento', 'Unidade'), show = 'headings')
+    tabelaEventos.heading('Cliente', text = 'Cliente')
+    tabelaEventos.heading('Produto', text = 'Produto')
+    tabelaEventos.heading('Data pedido', text = 'Data pedido')
+    tabelaEventos.heading('Data previsão', text = 'Data previsão')
+    tabelaEventos.heading('Qtd Evento', text = 'Qtd Evento')
+    tabelaEventos.heading('Unidade', text = 'Unidade')
+    tabelaEventos.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+
+    tabelaEventos.column('Cliente', width=80, anchor=CENTER)
+    tabelaEventos.column('Produto', width=300, anchor=CENTER)
+    tabelaEventos.column('Data pedido', width=160, anchor=CENTER)
+    tabelaEventos.column('Data previsão', width=80, anchor=CENTER)
+    tabelaEventos.column('Qtd Evento', width=80, anchor=CENTER)
+    tabelaEventos.column('Unidade', width=80, anchor=CENTER)
+    
+
+
+        
+def inserirTabelaTeste():
+    # ('Id', 'Cliente', 'Produto', 'Linha', 'Classificação', 'Data Pedido', 'Data Previsão'))
+    # data = (1, 'col1', 'col2', 'col3')
+    # tabelaTeste.insert(parent='', index=0, values=data)
+    produtos_meio_semana = setarDataPedidosMeioSemana()
+    
+    tabelaSemana.delete(*tabelaSemana.get_children())
+    tabelaSemana_semi.delete(*tabelaSemana_semi.get_children())
+    for p in produtos_meio_semana:
+        id = p['idProdutoComposicao']
+        nome = p['nomeProdutoComposicao']
+        classificacao = p['classificacao']
+        linha = p['linha']
+        estoque = p['estoque']
+        unidadeEstoque = p['unidadeEstoque']
+        totalProducao = p['totalProducao']
+        unidade = p['unidade']
+        data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
+        if p['produtoAcabado'] == True:
+            tabelaSemana.insert(parent='', index=0, values=data)
+        else:
+            tabelaSemana_semi.insert(parent='', index=0, values=data) 
+         
+
 def inserirNaLista():
     if incluirLinhaProducao.get() == 1:
         produtos = selecionarOpcao(Event)
     else:
         produtos = setarData()
-    
     
     if produtos == None:
         messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
@@ -717,7 +991,13 @@ root.title("Gerar pedidos de suprimento")
 
 root.geometry("1150x800")
 
-mainFrame = Frame(root)
+notebook = ttk.Notebook(root)
+notebook.pack(fill=BOTH, expand=True)
+
+page1 = Frame(notebook)
+notebook.add(page1, text='Página 1')
+
+mainFrame = Frame(page1)
 mainFrame.pack(fill=BOTH, expand=1)
 
 canvas = Canvas(mainFrame)
@@ -805,13 +1085,7 @@ c_confeitaria.grid(row=12, column=1, padx=10, sticky='w')
 txt_tipo_planilha = Label(secondFrame, text="Qual lista de pedido de suprimento você quer gerar?", font=("Arial", 14))
 txt_tipo_planilha.grid(row=13, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 
-
-
-radiobutton_variable = IntVar()
-
 radiobutton_variable = IntVar(value=1)
-
-
 radio_acabados = Radiobutton(secondFrame, text="Composição acabados", font=("Arial", 14), variable = radiobutton_variable, value = 1)
 radio_acabados.grid(row = 14, columnspan=2, padx=(150,0), pady=2, sticky="nsew")
 radio_semiacabados = Radiobutton(secondFrame, text="Composição semi-acabados", font=("Arial", 14), variable = radiobutton_variable, value = 2)
@@ -820,7 +1094,22 @@ radio_semiacabados.grid(row = 15, columnspan=2, padx=(150,0), pady=2, sticky="ns
 btn_obter_data = Button(secondFrame, text="Gerar Planilhas Excel", bg='#C0C0C0', font=("Arial", 16), command=gerarPlanilha)
 btn_obter_data.grid(row=16, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
+page2 = Frame(notebook)
+notebook.add(page2,text='Página 2')
+
+lb1 = Label(page2, text='I am page 2')
+lb1.grid(pady=20)
+
+btn_pedidos_semana = Button(page2, text="Ver pedidos meio semana", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaTeste)
+btn_pedidos_semana.grid(row=1)
+
+btn_mostrar_eventos = Button(page2, text="Ver todos os eventos", bg='#C0C0C0', font=("Arial", 16), command=verTodosEventos)
+btn_mostrar_eventos.grid(row=5)
+
+criarTabelaMeioSemana()
 criarTabela()
+
+# tabelaSemana.bind("<Button-1>", verTodosEventos)
 root.mainloop()
 
    
