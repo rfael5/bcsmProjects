@@ -14,25 +14,15 @@ from openpyxl.styles import PatternFill
 from random import choice
 import time
 
-# conexao = (
-#     "mssql+pyodbc:///?odbc_connect=" + 
-#     "DRIVER={ODBC Driver 17 for SQL Server};" +
-#     "SERVER=192.168.1.137;" +
-#     "DATABASE=SOUTTOMAYOR;" +
-#     "UID=Sa;" +
-#     "PWD=P@ssw0rd2023"
-# )
+#CONEXAO BANCO DE DADOS
 
-conexao = (
-    "mssql+pyodbc:///?odbc_connect=" + 
-    "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=192.168.1.43;" +
-    "DATABASE=SOUTTOMAYOR;" +
-    "UID=Sa;" +
-    "PWD=P@ssw0rd2023@#$"
-)
-
+from conexaobd import ConexaoBD
+conexao_bd = ConexaoBD()
+conexao = conexao_bd.get_conexao()
 engine = create_engine(conexao, pool_pre_ping=True)
+###################################################
+
+
 
 dataInicio = ''
 dataFim = ''
