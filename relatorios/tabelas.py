@@ -13,7 +13,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from random import choice
 
-import connection
 import formatacao_objeto
 
 def criarTabela(frame):

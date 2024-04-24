@@ -2,23 +2,34 @@ from tkinter import filedialog
 import pandas as pd
 import numpy as np
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+#tkinter
 from tkinter import *
 from tkinter import ttk
 from tkcalendar import DateEntry
 from tkinter import messagebox
-from openpyxl import Workbook
+########################################
+
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from random import choice
-
-import connection
 import formatacao_objeto
 import tabelas
+
+#CONEXAO BANCO DE DADOS
+###################################################
+#QUERY
+import query
+###################################################
+
+import math
 
 dataInicio = ''
 dataFim = ''
 produtosAjustados = []
+
+
 
 def formatarData(data):
     data_objeto = datetime.strptime(data, '%d/%m/%Y')
@@ -39,16 +50,16 @@ def setarData():
     dataFim = dtFim.get()
     dtFimFormatada = formatarData(dataFim)
     if dtInicioFormatada < dtFimFormatada:
-        produtosComposicao = connection.getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
-        composicaoSemiAcabados = connection.getCompSemiAcabados(dtInicioFormatada, dtFimFormatada)
+        produtosComposicao = query.getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
+        composicaoSemiAcabados = query.getCompSemiAcabados(dtInicioFormatada, dtFimFormatada)
                 
         if len(produtosComposicao) == 0:
             tamanhoLista = 0
             tabelas.criarTabela(secondFrame)
             return tamanhoLista
         else:
-            ajustes = connection.getAjustes(dtInicioFormatada, dtFimFormatada)
-            estoque = connection.getEstoque()
+            ajustes = query.getAjustes(dtInicioFormatada, dtFimFormatada)
+            estoque = query.getEstoque()
             produtosQtdAjustada = formatacao_objeto.calcularQtdProducao(produtosComposicao)
             ajustesAplicados = formatacao_objeto.aplicarAjustes(produtosQtdAjustada, ajustes)
             formatacao_objeto.adicionarEstoque(ajustesAplicados, estoque)
@@ -79,15 +90,15 @@ def setarDataPedidosMeioSemana(tipo_requisicao):
 
     #checarEventosNaLista()
     global ajustes_meio_semana
-    pedidosMeioSemana = connection.getPedidosMeioSemana(dtInicioFormatada, dtFimFormatada)
-    semiacabados = connection.getSemiAcabadosMeioSemana(dtInicioFormatada, dtFimFormatada)
+    pedidosMeioSemana = query.getPedidosMeioSemana(dtInicioFormatada, dtFimFormatada)
+    semiacabados = query.getSemiAcabadosMeioSemana(dtInicioFormatada, dtFimFormatada)
     
     if len(pedidosMeioSemana) == 0:
         tamanho_lista = 0
         return tamanho_lista
     else:
-        ajustes = connection.getAjustes(dtInicioFormatada, dtFimFormatada)
-        estoque = connection.getEstoque()
+        ajustes = query.getAjustes(dtInicioFormatada, dtFimFormatada)
+        estoque = query.getEstoque()
         produtosQtdAjustada = formatacao_objeto.calcularQtdProducao(pedidosMeioSemana)
         ajustes_meio_semana = formatacao_objeto.aplicarAjustes(produtosQtdAjustada, ajustes)
         formatacao_objeto.adicionarEstoque(ajustes_meio_semana, estoque)
@@ -403,7 +414,7 @@ def inserirNaLista():
                 linha = p['linha']
                 estoque = p['estoque']
                 unidadeEstoque = p['unidadeEstoque']
-                totalProducao = p['totalProducao']
+                totalProducao = math.ceil(p['totalProducao'])
                 unidade = p['unidade']
                 data = (id, nome, classificacao, linha, estoque, unidadeEstoque, totalProducao, unidade)
                 if p['produtoAcabado'] == True:

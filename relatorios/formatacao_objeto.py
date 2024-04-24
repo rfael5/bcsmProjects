@@ -13,7 +13,9 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from random import choice
 
-import connection
+import query
+import conexaobd
+
 
 def adicionarAjustes(evento, ajustes):
     for a in ajustes:
