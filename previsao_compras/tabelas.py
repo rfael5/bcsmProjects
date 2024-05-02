@@ -20,6 +20,26 @@ def criarTabela(frame):
     table.column('Un. Estoque', width=80, anchor=CENTER)
     table.column('Qtd. Producao', width=100, anchor=CENTER)
     table.column('Unidade', width=80, anchor=CENTER)
+    
+def criarTabelaAnoPassado(frame):
+    global tableAnoPassado 
+    tableAnoPassado = ttk.Treeview(frame, columns = ('ID', 'Produto', 'Classificacao', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings', height=25)
+    tableAnoPassado.heading('ID', text = 'ID')
+    tableAnoPassado.heading('Produto', text = 'Produto')
+    tableAnoPassado.heading('Classificacao', text = 'Classificacao')
+    tableAnoPassado.heading('Estoque', text = 'Estoque')
+    tableAnoPassado.heading('Un. Estoque', text = 'Un. Estoque')
+    tableAnoPassado.heading('Qtd. Producao', text = 'Qtd. Producao')
+    tableAnoPassado.heading('Unidade', text = 'Unidade')
+    tableAnoPassado.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+
+    tableAnoPassado.column('ID', width=80, anchor=CENTER)
+    tableAnoPassado.column('Produto', width=300, anchor=CENTER)
+    tableAnoPassado.column('Classificacao', width=160, anchor=CENTER)
+    tableAnoPassado.column('Estoque', width=80, anchor=CENTER)
+    tableAnoPassado.column('Un. Estoque', width=80, anchor=CENTER)
+    tableAnoPassado.column('Qtd. Producao', width=100, anchor=CENTER)
+    tableAnoPassado.column('Unidade', width=80, anchor=CENTER)
 
 def criarTabelaMeioSemana(frame):
     global tabelaSemana

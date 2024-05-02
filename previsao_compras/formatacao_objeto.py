@@ -133,22 +133,17 @@ def unirListasComposicao(acabados, semiAcabados, incluirLinhaProducao):
     for p in semiAcabados:
         acabados.append(p)
     
-    for x in acabados:
-        if 'Produtos Semi Acab.' in x['negocio']:
-            print(x)
+    # for x in acabados:
+    #     if 'Produtos Semi Acab.' in x['negocio']:
+    #         print(x)
     
     #list(filter(lambda produto:produto['linha'] == tipoFiltro, listaCompleta))
     filtrar_semi_acabados = list(filter(lambda produto:'Produtos Semi Acab.' not in produto['negocio'], acabados))
     
     df = pd.DataFrame(filtrar_semi_acabados)   
-    
-    if incluirLinhaProducao.get() == 1:
-        result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha', 'estoque', 'unidadeEstoque','produtoAcabado'])[['totalProducao']].sum().reset_index()
-        result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
-        
-    else:
-        result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'estoque', 'unidadeEstoque', 'produtoAcabado'])[['totalProducao']].sum().reset_index()
-        result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
+
+    result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'estoque', 'unidadeEstoque'])[['totalProducao']].sum().reset_index()
+    result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']]
     
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
