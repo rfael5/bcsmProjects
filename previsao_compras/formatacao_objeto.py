@@ -32,6 +32,7 @@ def inserirCol_SemiAcabados(row, semiAcabados, incluirLinhaProducao):
             comp_semiacabados['qtdComposicao'] = p['qtdProdutoComposicao']
             comp_semiacabados['unidadeComposicao'] = p['unidadeProdutoComposicao']
             comp_semiacabados['classificacao'] = p['classificacao']
+            comp_semiacabados['IDX_CLASSIFICACAO'] = p['IDX_CLASSIFICACAO']
             if incluirLinhaProducao.get() == 1:
                 comp_semiacabados['linha'] = row['linha']
             comp_semiacabados['idProdutoAcabado'] = p['idProdutoAcabado']
@@ -138,8 +139,8 @@ def unirListasComposicao(acabados, semiAcabados, incluirLinhaProducao):
     
     df = pd.DataFrame(filtrar_semi_acabados)   
 
-    result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'estoque', 'unidadeEstoque'])[['totalProducao']].sum().reset_index()
-    result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']]
+    result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'IDX_CLASSIFICACAO', 'unidade', 'estoque', 'unidadeEstoque'])[['totalProducao']].sum().reset_index()
+    result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao','IDX_CLASSIFICACAO', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade']]
     
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
@@ -153,11 +154,11 @@ def somarProdutosEvento(produtosComposicao, incluirLinhaProducao):
     dfComposicao['unidade'] = dfComposicao['unidadeComposicao'].apply(alterarStringUnidade)
     dfComposicao['totalProducao'] = dfComposicao.apply(converterKg, axis=1)
     
-    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'negocio', 'classificacao', 'unidade', 'estoque', 'unidadeEstoque', 'produtoAcabado'])[['totalProducao']].sum().reset_index()
+    result = dfComposicao.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'negocio', 'classificacao', 'IDX_CLASSIFICACAO', 'unidade', 'estoque', 'unidadeEstoque', 'produtoAcabado'])[['totalProducao']].sum().reset_index()
 
     result['unidade'] = result['unidade'].apply(mudarUnidade)
     
-    result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'negocio', 'classificacao', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
+    result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'negocio', 'classificacao', 'IDX_CLASSIFICACAO', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
     
     resultJson = result.to_json(orient='records')
     dadosDesserializados = json.loads(resultJson)
