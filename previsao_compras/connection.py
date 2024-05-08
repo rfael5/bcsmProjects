@@ -2,23 +2,23 @@ from sqlalchemy import create_engine
 import pandas as pd
 import json
 
-# conexao = (
-#     "mssql+pyodbc:///?odbc_connect=" + 
-#     "DRIVER={ODBC Driver 17 for SQL Server};" +
-#     "SERVER=localhost;" +
-#     "DATABASE=SOUTTOMAYOR;" +
-#     "UID=Sa;" +
-#     "PWD=P@ssw0rd2023"
-# )
-
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
     "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=192.168.1.43;" +
+    "SERVER=localhost;" +
     "DATABASE=SOUTTOMAYOR;" +
     "UID=Sa;" +
-    "PWD=P@ssw0rd2023@#$"
+    "PWD=P@ssw0rd2023"
 )
+
+# conexao = (
+#     "mssql+pyodbc:///?odbc_connect=" + 
+#     "DRIVER={ODBC Driver 17 for SQL Server};" +
+#     "SERVER=192.168.1.43;" +
+#     "DATABASE=SOUTTOMAYOR;" +
+#     "UID=Sa;" +
+#     "PWD=P@ssw0rd2023@#$"
+# )
 
 engine = create_engine(conexao, pool_pre_ping=True)
 
@@ -34,7 +34,7 @@ def getProdutosComposicao(dataInicio, dataFim):
         e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, c.IDX_NEGOCIO as negocio, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
         a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
-        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento, c.PCCUSTO
+        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento, c.PCCUSTO as precoUltimaCompra
     from TPAPRODCOMPOSICAO as a 
         inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
         inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
@@ -59,9 +59,7 @@ def getProdutosComposicao(dataInicio, dataFim):
     order by p.DESCRICAO
     """
     produtosComposicao = receberDados(queryProdutosComposicao)
-    for x in produtosComposicao:
-        if 'Açucar Mascavo kg' in x['nomeProdutoComposicao']:
-            print(x)
+
     return produtosComposicao
 
 
@@ -112,7 +110,8 @@ def getCompSemiAcabados(dataInicio, dataFim):
     SELECT 
     C.IDX_PRODUTO as idProduto, 
     P.DESCRICAO as nomeProdutoComposicao,
-    P.IDX_NEGOCIO as negocio, 
+    P.IDX_NEGOCIO as negocio,
+    P.PCCUSTO as precoUltimaCompra, 
     C.UN as unidadeProdutoComposicao, 
     C.QUANTIDADE as qtdProdutoComposicao, 
     P.IDX_LINHA as classificacao, 

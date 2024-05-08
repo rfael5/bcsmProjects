@@ -178,7 +178,8 @@ def inserirNaLista():
             unidadeEstoque = p['unidadeEstoque']
             totalProducao = p['totalProducao']
             unidade = p['unidade']
-            data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
+            preco_ultima_compra = p['precoUltimaCompra']
+            data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade, preco_ultima_compra)
             tabelas.table.insert(parent='', index=0, values=data)
 
 
@@ -250,9 +251,6 @@ btn_obter_data = Button(secondFrame, text="Mostrar lista", bg='#C0C0C0', font=("
 btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=2, sticky='nsew')
 
 #row 7 --> Tabela composição acabados
-
-btn_abrir_janela = Button(secondFrame, text="Ver qtd. ano anterior", bg='#C0C0C0', font=("Arial", 16), command=lambda: verQtdAnoPassado(tabelas.table))
-btn_abrir_janela.grid(row=8, column=0)
 
 # btn_mostrar_eventos = Button(secondFrame, text="Ver todos os eventos", bg='#C0C0C0', font=("Arial", 16), command= lambda:verTodosEventos(ajustes_periodo, tabelas.table))
 # btn_mostrar_eventos.grid(row=8)
