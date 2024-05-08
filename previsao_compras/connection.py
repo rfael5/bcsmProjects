@@ -34,7 +34,7 @@ def getProdutosComposicao(dataInicio, dataFim):
         e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, c.IDX_NEGOCIO as negocio, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
         a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
-        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
+        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento, c.PCCUSTO
     from TPAPRODCOMPOSICAO as a 
         inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
         inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO
@@ -59,14 +59,18 @@ def getProdutosComposicao(dataInicio, dataFim):
     order by p.DESCRICAO
     """
     produtosComposicao = receberDados(queryProdutosComposicao)
+    for x in produtosComposicao:
+        if 'Açucar Mascavo kg' in x['nomeProdutoComposicao']:
+            print(x)
     return produtosComposicao
+
 
 def getPedidosMeioSemana(dataInicio, dataFim):
     queryPedidosMeioSemana = f"""
     select 
         e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, c.IDX_NEGOCIO as negocio, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
-        a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
+        a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, c.IDX_CLASSIFICACAO, 
         c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento
     from TPAPRODCOMPOSICAO as a 
         inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
@@ -114,7 +118,8 @@ def getCompSemiAcabados(dataInicio, dataFim):
     P.IDX_LINHA as classificacao, 
     P2.PK_PRODUTO as idProdutoAcabado, 
     P2.DESCRICAO as nomeProdutoAcabado, 
-    P2.RENDIMENTO1 AS rendimento 
+    P2.RENDIMENTO1 AS rendimento, 
+    P.OPSUPRIMENTOMP
 FROM 
     TPAPRODCOMPOSICAO AS C
     INNER JOIN TPAPRODUTO AS P ON C.IDX_PRODUTO = P.PK_PRODUTO
@@ -124,7 +129,7 @@ WHERE
         SELECT 
             DISTINCT c.PK_PRODUTO
         FROM 
-            TPAPRODCOMPOSICAO as a 
+            TPAPRODCOMPOSICAO as a
             INNER JOIN TPAPRODUTO as c ON a.IDX_PRODUTO = c.PK_PRODUTO
             INNER JOIN TPAMOVTOPED as p ON a.RDX_PRODUTO = p.IDX_PRODUTO
             INNER JOIN TPADOCTOPED as e ON p.RDX_DOCTOPED = e.PK_DOCTOPED
@@ -135,6 +140,7 @@ WHERE
             AND c.OPSUPRIMENTOMP = 'S'
             AND (e.TPDOCTO = 'EC' OR e.TPDOCTO = 'OR') -- Verifica se TPDOCTO é 'EC' ou 'OR'
     )
+    AND P.OPSUPRIMENTOMP = 'S'
 ORDER BY 
     P.DESCRICAO;
     """

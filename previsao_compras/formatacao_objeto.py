@@ -133,10 +133,6 @@ def unirListasComposicao(acabados, semiAcabados, incluirLinhaProducao):
     for p in semiAcabados:
         acabados.append(p)
     
-    # for x in acabados:
-    #     if 'Produtos Semi Acab.' in x['negocio']:
-    #         print(x)
-    
     #list(filter(lambda produto:produto['linha'] == tipoFiltro, listaCompleta))
     filtrar_semi_acabados = list(filter(lambda produto:'Produtos Semi Acab.' not in produto['negocio'], acabados))
     

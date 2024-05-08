@@ -29,56 +29,25 @@ def formatarDataPedido(data):
     formatted_date = date_object.strftime('%d/%m/%Y')
     return formatted_date 
 
-def setarData():
+def setarData(tipo_requisicao):
     dataInicio = dtInicio.get()
     dtInicioFormatada = formatarData(dataInicio)
     dataFim = dtFim.get()
     dtFimFormatada = formatarData(dataFim)
     if dtInicioFormatada < dtFimFormatada:
         global ajustes_periodo
-        produtosComposicao = connection.getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
-        composicaoSemiAcabados = connection.getCompSemiAcabados(dtInicioFormatada, dtFimFormatada)
-        ajustes = connection.getAjustes(dtInicioFormatada, dtFimFormatada)
-        
-        if len(produtosComposicao) == 0:
-            tamanhoLista = 0
-            tabelas.criarTabela(secondFrame)
-            return tamanhoLista
+        if tipo_requisicao == 'ano-atual':
+            produtosComposicao = connection.getProdutosComposicao(dtInicioFormatada, dtFimFormatada)
+            composicaoSemiAcabados = connection.getCompSemiAcabados(dtInicioFormatada, dtFimFormatada)
+            ajustes = connection.getAjustes(dtInicioFormatada, dtFimFormatada)
+            print(dtInicioFormatada, dtFimFormatada)
         else:
-            estoque = connection.getEstoque()
-            produtosQtdAjustada = formatacao_objeto.calcularQtdProducao(produtosComposicao)
-            ajustesAplicados = formatacao_objeto.aplicarAjustes(produtosQtdAjustada, ajustes)
-            ajustes_periodo = ajustesAplicados
-            # for x in ajustes_periodo:
-            #     print(x)
-            formatacao_objeto.adicionarEstoque(ajustesAplicados, estoque)
-            mp_acabados = formatacao_objeto.somarProdutosEvento(ajustesAplicados, incluirLinhaProducao)
-            mp_semiAcabados = criarDictSemiAcabados(mp_acabados, composicaoSemiAcabados, estoque)
-            produtos = formatacao_objeto.unirListasComposicao(mp_acabados, mp_semiAcabados, incluirLinhaProducao)
-            return produtos 
-    else:
-        tabelas.criarTabela(secondFrame)
-        return None
-    
-def setarDataAnoPassado():
-    dataInicio = dtInicio.get()
-    dtInicioFormatada = formatarData(dataInicio)
-    dataFim = dtFim.get()
-    dtFimFormatada = formatarData(dataFim)
-     
-    dataInicioFormatada = datetime.strptime(dataInicio, '%d/%m/%Y')  
-    dataInicio_ano_passado = dataInicioFormatada - timedelta(days=365)
-    
-    dataFimFormatada = datetime.strptime(dataFim, '%d/%m/%Y')  
-    data_fim_ano_passado = dataFimFormatada - timedelta(days=365)
+            n_dt_inicio = int(dtInicioFormatada) - 10000
+            n_dt_fim = int(dtFimFormatada) - 10000
+            produtosComposicao = connection.getProdutosComposicao(n_dt_inicio, n_dt_fim)
+            composicaoSemiAcabados = connection.getCompSemiAcabados(n_dt_inicio, n_dt_fim)
+            ajustes = connection.getAjustes(n_dt_inicio, n_dt_fim)
 
-    
-    if dtInicioFormatada < dtFimFormatada:
-        global ajustes_periodo
-        produtosComposicao = connection.getProdutosComposicao(dataInicio_ano_passado, data_fim_ano_passado)
-        composicaoSemiAcabados = connection.getCompSemiAcabados(dataInicio_ano_passado, data_fim_ano_passado)
-        ajustes = connection.getAjustes(dataInicio_ano_passado, data_fim_ano_passado)
-        
         if len(produtosComposicao) == 0:
             tamanhoLista = 0
             tabelas.criarTabela(secondFrame)
@@ -99,9 +68,10 @@ def setarDataAnoPassado():
         tabelas.criarTabela(secondFrame)
         return None
 
-# def checarEventosNaLista():
-#     for evento in tabelas.tabelaSemana.get_children():
-#         print(tabelas.tabelaSemana.item(evento))
+def checarEventosNaLista():
+    for evento in tabelas.tabelaSemana.get_children():
+        print(tabelas.tabelaSemana.item(evento))
+
 
 def formatarDataPedido(data):
     milliseconds_since_epoch = data
@@ -116,6 +86,28 @@ def verTodosEventos(lista_produtos, tabela):
         produto = tabela.item(indice)['values'][0]
         produtosFiltrados = list(filter(lambda evento:int(evento['idProdutoComposicao']) == int(produto), lista_produtos))
         abrirOutraJanela(produtosFiltrados)
+
+def verQtdAnoPassado(tabela):
+    produtos = setarData('ano-anterior')
+    indice = tabela.selection()
+    if indice:
+        produto = tabela.item(indice)['values'][0]
+        produtosFiltrados = list(filter(lambda p:int(p['idProdutoComposicao']) == int(produto), produtos))
+        abrirJanelaAnoAnterior(produtosFiltrados)
+
+def abrirJanelaAnoAnterior(produtosFiltrados):
+    j_ano_anterior = Toplevel(root)
+    j_ano_anterior.title("Quantidade ano anterior")
+    j_ano_anterior.geometry("1250x400")
+    tabelas.criarTabelaMesAnterior(j_ano_anterior)
+    for x in produtosFiltrados:
+        id = x['idProdutoComposicao']
+        produto = x['nomeProdutoComposicao']
+        total = x['totalProducao']
+        unidade = x['unidade']
+        data = (id, produto, total, unidade)
+        tabelas.tbl_ano_anterior.insert(parent='', index=0, values=data)
+    
 
 def abrirOutraJanela(produtosFiltrados):
     nova_janela = Toplevel(root)  # Cria uma nova janela
@@ -137,34 +129,6 @@ def abrirOutraJanela(produtosFiltrados):
         data = (cliente, produto, dataPedido, dataPrevisao, qtdEvento, unidade)
         tabelas.tabelaEventos.insert(parent='', index=0, values=data)
 
-
-# def inserirTabelaTeste(tipo_requisicao):
-#     produtos_meio_semana = setarDataPedidosMeioSemana(tipo_requisicao)
-    
-#     if produtos_meio_semana == 0 or produtos_meio_semana == None:
-#         mensagem_banco.configure(text='Nenhum evento foi marcado hoje para essa semana')
-#         #messagebox.showinfo('Sem eventos', 'Nenhum evento nesse período')
-#     else:
-#         produtosOrdenados = sorted(produtos_meio_semana, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
-#         qtd_eventos_tabela = len(tabelas.tabelaSemana.get_children())
-#         qtd_eventos_query = len(produtosOrdenados)
-#         if qtd_eventos_tabela != qtd_eventos_query:
-#             mensagem_banco.configure(text='Houve marcação de eventos hoje para essa semana.')
-#             #messagebox.showinfo('Novos eventos/encomendas', 'Novos pedidos foram feitos hoje para essa semana.')
-#             tabelas.tabelaSemana.delete(*tabelas.tabelaSemana.get_children())
-#             for p in produtosOrdenados:
-#                 id = p['idProdutoComposicao']
-#                 nome = p['nomeProdutoComposicao']
-#                 classificacao = p['classificacao']
-#                 estoque = p['estoque']
-#                 unidadeEstoque = p['unidadeEstoque']
-#                 totalProducao = p['totalProducao']
-#                 unidade = p['unidade']
-#                 data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
-#                 tabelas.tabelaSemana.insert(parent='', index=0, values=data)
-#         else:
-#             #messagebox.showinfo('Sem novos pedidos hoje', 'Nenhum pedido novo por enquanto.')
-#             return
 
 def formatarListaSemiAcabados(lista, estoque):
     formatacao_objeto.adicionarEstoque(lista, estoque)
@@ -196,7 +160,7 @@ def criarDictSemiAcabados(acabados, semiAcabados, estoque):
     return listaFormatada
 
 def inserirNaLista():
-    produtos = setarData()
+    produtos = setarData('ano-atual')
     
     if produtos == None:
         messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
@@ -216,33 +180,10 @@ def inserirNaLista():
             unidade = p['unidade']
             data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
             tabelas.table.insert(parent='', index=0, values=data)
-            
-            
-def inserirNaListaAnoPassado():
-    produtos = setarDataAnoPassado()
-    
-    if produtos == None:
-        messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
-    elif produtos == 0:
-        messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo')    
-    else:
-        produtosOrdenados = sorted(produtos, key=lambda p:p['nomeProdutoComposicao'], reverse=True)
-        
-        tabelas.tableAnoPassado.delete(*tabelas.tableAnoPassado.get_children())
-        for p in produtosOrdenados:
 
-            id = p['idProdutoComposicao']
-            nome = p['nomeProdutoComposicao']
-            classificacao = p['classificacao']
-            estoque = p['estoque']
-            unidadeEstoque = p['unidadeEstoque']
-            totalProducao = p['totalProducao']
-            unidade = p['unidade']
-            data = (id, nome, classificacao, estoque, unidadeEstoque, totalProducao, unidade)
-            tabelas.tableAnoPassado.insert(parent='', index=0, values=data)
 
 def gerarPlanilha():
-    produtos = setarData()
+    produtos = setarData('ano-atual')
     if produtos == None:
         messagebox.showinfo('Data inválida', 'Periodo selecionado inválido')
     elif produtos == 0:
@@ -250,12 +191,6 @@ def gerarPlanilha():
     else:
         criacao_planilha.gerarArquivoExcel('COMPRAS', produtos, incluirLinhaProducao) 
 
-# def consultarAttBanco():
-#     #global hora_atual
-#     hora_atual = datetime.now()
-#     hora_ultima_checagem.configure(text=f'Momento da última checagem: {str(hora_atual)}')
-#     inserirTabelaTeste('timer')
-#     page2.after(10000, consultarAttBanco)
 
 
 #Tkinter
@@ -311,11 +246,13 @@ lbl_dtFim.grid(row=1, column=1, padx=(50, 0), pady=5, sticky="w")
 dtFim = DateEntry(secondFrame, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
 dtFim.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
 
-btn_obter_data = Button(secondFrame, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), 
-                        command=lambda: [inserirNaLista(), inserirNaListaAnoPassado()])
+btn_obter_data = Button(secondFrame, text="Mostrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirNaLista)
 btn_obter_data.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=2, sticky='nsew')
 
 #row 7 --> Tabela composição acabados
+
+btn_abrir_janela = Button(secondFrame, text="Ver qtd. ano anterior", bg='#C0C0C0', font=("Arial", 16), command=lambda: verQtdAnoPassado(tabelas.table))
+btn_abrir_janela.grid(row=8, column=0)
 
 # btn_mostrar_eventos = Button(secondFrame, text="Ver todos os eventos", bg='#C0C0C0', font=("Arial", 16), command= lambda:verTodosEventos(ajustes_periodo, tabelas.table))
 # btn_mostrar_eventos.grid(row=8)
@@ -362,8 +299,6 @@ btn_obter_data.grid(row=17, column=0, columnspan=2, padx=(80, 0), pady=(10, 30),
 
 #tabelas.criarTabelaMeioSemana(page2)
 tabelas.criarTabela(secondFrame)
-
-tabelas.criarTabelaAnoPassado(secondFrame)
 
 #consultarAttBanco()
 
