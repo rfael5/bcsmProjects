@@ -3,10 +3,10 @@ class ConexaoBD:
         self.conexao = (
             "mssql+pyodbc:///?odbc_connect=" + 
             "DRIVER={ODBC Driver 17 for SQL Server};" +
-            "SERVER=192.168.1.43;" +
+            "SERVER=localhost;" +
             "DATABASE=SOUTTOMAYOR;" +
             "UID=Sa;" +
-            "PWD=P@ssw0rd2023@#$"
+            "PWD=P@ssw0rd2023"
         )
 
     def get_conexao(self):
