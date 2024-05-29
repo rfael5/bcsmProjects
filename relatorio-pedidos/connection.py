@@ -6,7 +6,7 @@ import json
 conexao = (
     "mssql+pyodbc:///?odbc_connect=" + 
     "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=localhost;" +
+    "SERVER=192.168.1.137;" +
     "DATABASE=SOUTTOMAYOR;" +
     "UID=Sa;" +
     "PWD=P@ssw0rd2023"
@@ -39,7 +39,8 @@ def getProdutosComposicao(dataInicio, dataFim):
         e.PK_DOCTOPED as idEvento, e.NOME as nomeEvento, e.DOCUMENTO as documento, e.DTEVENTO as dataEvento, e.DTPREVISAO as dataPrevisao, e.DATA as dataPedido, p.PK_MOVTOPED as idMovtoped, 
         ca.IDX_LINHA as linha, p.DESCRICAO as nomeProdutoAcabado, ca.RENDIMENTO as rendimento, p.UNIDADE as unidadeAcabado, 
         a.RDX_PRODUTO as idProdutoAcabado, c.DESCRICAO as nomeProdutoComposicao, c.IDX_LINHA as classificacao, 
-        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento, a.DTINC
+        c.PK_PRODUTO as idProdutoComposicao, a.QUANTIDADE as qtdProdutoComposicao, a.UN as unidadeComposicao, p.L_QUANTIDADE as qtdProdutoEvento, a.DTINC,
+        C.ID, c.UN, c.UNPRODUCAO, c.PROPPRODUCAO, c.DESCRICAO
     from TPAPRODCOMPOSICAO as a 
         inner join TPAPRODUTO as c on a.IDX_PRODUTO = c.PK_PRODUTO
         inner join TPAMOVTOPED as p on a.RDX_PRODUTO = p.IDX_PRODUTO

@@ -47,9 +47,37 @@ def alterarStringUnidade(unidade):
         return unidadeCorrigida
     else:
         return unidade   
+    
+def converterUnidadeDiferente(produtos):
+    for produto in produtos:
+        try:
+            #Aplicando a alterarStringUnidade a todos os campos necessarios da lista PRODUTO
+            unidadeEstoque = alterarStringUnidade(produto['unidadeEstoque'])
+            unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
 
+            if unidadeEstoque != unidadeComposicao:
+                produto['unidadeComposicao'] = produto['unidadeEstoque']
+                
+                if unidadeEstoque == "MO":
+                    #print(produto['DESCRICAO'], produto['PROPPRODUCAO'])
+                    print("idEvento", produto['idEvento'] ,"nome", produto['DESCRICAO'], "Qtd produto que o evento vai usar: ", produto['qtdProdutoEvento'])
+                    print("1 unidade de equivale a ", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
+                    result = (produto['qtdProdutoComposicao'] / produto['PROPPRODUCAO']) * produto['qtdProdutoEvento']
+                    print("Total de",produto['unidadeComposicao'], "que precisamos ->", result)
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+        except KeyError as e:
+            print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
+            
+            
 #Converte as medidas dos produtos de gramas e ml para quilos e litros.
-def converterKg(produto):
+def converterKg(produto):     
     if str(produto['unidade']) == "GR" or str(produto['unidade']) == "ML":
         result = produto['totalProducao'] / 1000 
     else:
