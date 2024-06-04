@@ -1,3 +1,4 @@
+import math
 from sqlalchemy import create_engine
 import pandas as pd
 import json
@@ -49,32 +50,26 @@ def alterarStringUnidade(unidade):
         return unidade   
     
 def converterUnidadeDiferente(produtos):
-    for produto in produtos:
+   
+     for produto in produtos:
         try:
             #Aplicando a alterarStringUnidade a todos os campos necessarios da lista PRODUTO
             unidadeEstoque = alterarStringUnidade(produto['unidadeEstoque'])
             unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
 
-            if unidadeEstoque != unidadeComposicao:
+            if unidadeEstoque != unidadeComposicao and unidadeEstoque != '':
+                print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
+                print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
                 produto['unidadeComposicao'] = produto['unidadeEstoque']
-                
-                if unidadeEstoque == "MO":
-                    #print(produto['DESCRICAO'], produto['PROPPRODUCAO'])
-                    print("idEvento", produto['idEvento'] ,"nome", produto['DESCRICAO'], "Qtd produto que o evento vai usar: ", produto['qtdProdutoEvento'])
-                    print("1 unidade de equivale a ", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
-                    result = (produto['qtdProdutoComposicao'] / produto['PROPPRODUCAO']) * produto['qtdProdutoEvento']
-                    print("Total de",produto['unidadeComposicao'], "que precisamos ->", result)
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+                print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
+                result = math.ceil(produto['qtdProdutoEvento'] / produto['PROPPRODUCAO'])
+                print("(Total de",produto['unidadeComposicao'], "que precisamos (arrendondado) ) ->", result)
+                print("(Total de",produto['unidadeComposicao'], "que precisamos (VALOR SEM ARREDONDAMENTO) ) ->", produto['qtdProdutoEvento'] / produto['PROPPRODUCAO'])
+                print("------------------------------------------------------------")
+                produto['totalProducao'] = result
+        
         except KeyError as e:
             print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
-            
             
 #Converte as medidas dos produtos de gramas e ml para quilos e litros.
 def converterKg(produto):     
@@ -164,7 +159,7 @@ def unirListasComposicao(acabados, semiAcabados):
     df = pd.DataFrame(acabados)
     result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha', 'estoque', 'unidadeEstoque','produtoAcabado'])[['totalProducao']].sum().reset_index()
     result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
-    result['totalProducao'] = result['totalProducao'].round(2)
+    result['totalProducao'] = result['totalProducao'].round(4)
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
     return dadosOrdenados   

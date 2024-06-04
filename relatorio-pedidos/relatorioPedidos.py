@@ -70,7 +70,7 @@ def setarData(tipo_requisicao):
                 ajustes_ano_anterior = ajustesAplicados
             #insere na lista uma coluna com o saldo de estoque
             formatacao_objeto.adicionarEstoque(ajustesAplicados, estoque)
-            formatacao_objeto.converterUnidadeDiferente(ajustesAplicados)
+            produtos = formatacao_objeto.converterUnidadeDiferente(ajustesAplicados)
             #Soma todos os pedidos de cada produto, chegando ao valor total de pedidos para cada um
             mp_acabados = formatacao_objeto.somarProdutosEvento(ajustesAplicados)
             #Faz as operações acima com a lista de composição dos semi-acabados
