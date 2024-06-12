@@ -1,3 +1,4 @@
+import math
 from tkinter import filedialog
 import pandas as pd
 import numpy as np
@@ -73,10 +74,12 @@ def setarData(tipo_requisicao):
             produtos = formatacao_objeto.converterUnidadeDiferente(ajustesAplicados)
             #Soma todos os pedidos de cada produto, chegando ao valor total de pedidos para cada um
             mp_acabados = formatacao_objeto.somarProdutosEvento(ajustesAplicados)
+           
             #Faz as operações acima com a lista de composição dos semi-acabados
             mp_semiAcabados = criarDictSemiAcabados(mp_acabados, composicaoSemiAcabados, estoque)
             #Une a lista dos acabados com os semi-acabados em uma só, e retorna a lista final
             produtos = formatacao_objeto.unirListasComposicao(mp_acabados, mp_semiAcabados)
+            
             return produtos 
     else:
         tabelas.criarTabela(secondFrame)

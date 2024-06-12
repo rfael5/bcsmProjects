@@ -48,28 +48,6 @@ def alterarStringUnidade(unidade):
         return unidadeCorrigida
     else:
         return unidade   
-    
-def converterUnidadeDiferente(produtos):
-   
-     for produto in produtos:
-        try:
-            #Aplicando a alterarStringUnidade a todos os campos necessarios da lista PRODUTO
-            unidadeEstoque = alterarStringUnidade(produto['unidadeEstoque'])
-            unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
-
-            if unidadeEstoque != unidadeComposicao and unidadeEstoque != '':
-                print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
-                print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
-                produto['unidadeComposicao'] = produto['unidadeEstoque']
-                print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
-                result = math.ceil(produto['qtdProdutoEvento'] / produto['PROPPRODUCAO'])
-                print("(Total de",produto['unidadeComposicao'], "que precisamos (arrendondado) ) ->", result)
-                print("(Total de",produto['unidadeComposicao'], "que precisamos (VALOR SEM ARREDONDAMENTO) ) ->", produto['qtdProdutoEvento'] / produto['PROPPRODUCAO'])
-                print("------------------------------------------------------------")
-                produto['totalProducao'] = result
-        
-        except KeyError as e:
-            print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
             
 #Converte as medidas dos produtos de gramas e ml para quilos e litros.
 def converterKg(produto):     
@@ -77,7 +55,7 @@ def converterKg(produto):
         result = produto['totalProducao'] / 1000 
     else:
         result = produto['totalProducao']
-    return round(result, 4)
+    return round(result, 2)
 
 #Muda a string para a unidade de medida correta.
 def mudarUnidade(unidade):
@@ -88,7 +66,13 @@ def mudarUnidade(unidade):
     else:
         return unidade
     
-
+#Arredondar o valor da quantidade total de pedidos para 'mais'
+def arredondarValor(row):
+    if row['unidade'] != 'KG' and row['unidade'] != 'ML':
+        return math.ceil(row['totalProducao'])
+    else:
+        return row['totalProducao']
+    
 #Multiplica a quantidade do produto que vai na receita pela quantidade
 #de pedidos da receita final.
 #Dependendo da unidade de medida em que o produto é vendido, a quantidade
@@ -98,6 +82,9 @@ def calcularQtdProducao(produtosComposicao):
         if e['unidadeAcabado'] == 'PP':
             total = (e["qtdProdutoEvento"] / 10) * e["qtdProdutoComposicao"]
             e["totalProducao"] = total
+        elif e['unidadeAcabado'] == 'CT':
+            total = e['qtdProdutoComposicao'] * e['qtdProdutoEvento']
+            e['totalProducao'] = total
         elif e['unidadeAcabado'] == 'UD':
             total = (e['qtdProdutoEvento'] / 100) * e['qtdProdutoComposicao']
             e['totalProducao'] = total
@@ -108,6 +95,42 @@ def calcularQtdProducao(produtosComposicao):
             total = e["qtdProdutoComposicao"] * e["qtdProdutoEvento"]
             e["totalProducao"] = total
     return produtosComposicao
+
+def converterUnidadeDiferente(produtos):
+     for produto in produtos:
+        try:
+            #Aplicando a alterarStringUnidade a todos os campos necessarios da lista PRODUTO
+            unidadeEstoque = alterarStringUnidade(produto['unidadeEstoque'])
+            unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
+            
+            if unidadeEstoque != unidadeComposicao or unidadeEstoque != '':
+                print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
+                print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
+                print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
+                    
+                produto['unidadeComposicao'] = produto['unidadeEstoque']
+                                
+                print("Calculo da funcao Antes ---->", produto['totalProducao'])
+                a = calcularQtdProducao([produto])[0]
+                print("Calculo da funcao depois ---->", a['totalProducao'])
+                        
+                result = produto['totalProducao'] / produto['PROPPRODUCAO']
+                print("Divisao -->", result)
+                produto['totalProducao'] = result
+                    
+                if(produto['unidadeAcabado']) == 'CT':
+                        print("CT ->")
+                elif(produto['unidadeAcabado']) == 'PP':
+                        print("PP ->")
+                elif(produto['unidadeAcabado']) == 'UD':
+                        print("UD ->")
+                elif(produto['unidadeAcabado']) == 'UM':
+                        print("UM ->")
+              
+                print("------------------------------------------------------------")
+                    
+        except KeyError as e:
+            print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
 
 #Executa a função que calcula o ajuste em cada produto da lista.
 def aplicarAjustes(produtosComposicao, ajustes):
@@ -197,6 +220,10 @@ def somarProdutosEvento(produtosComposicao):
     #Muda a string de unidade de medida de GR para KG.
     result['unidade'] = result['unidade'].apply(mudarUnidade)
     
+    #converte os valores para mais
+    result['totalProducao'] = result.apply(arredondarValor, axis=1)
+    
+    
     #Organiza as colunas na ordem que devem aparecer na tabela.
     result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
     
@@ -204,4 +231,5 @@ def somarProdutosEvento(produtosComposicao):
     dadosDesserializados = json.loads(resultJson)
     #Ordena os produtos em ordem alfabetica.
     dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
+    
     return dadosOrdenados
