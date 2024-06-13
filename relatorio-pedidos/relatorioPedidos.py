@@ -525,6 +525,46 @@ btn_mostrar_eventos.grid(row=7)
 tabelas.criarTabelaMeioSemana(page2)
 tabelas.criarTabela(secondFrame)
 
+
+
+####################################################
+#PÁGINA 3
+####################################################
+
+
+page3 = Frame(notebook)
+notebook.add(page3,text='Página 3')
+
+lb1 = Label(page3, text='I am page 3')
+lb1.grid(pady=20)
+
+hora_ultima_checagem = Label(page3, text='', bg='#C0C0C0', font=("Arial", 16))
+hora_ultima_checagem.grid(row=0, column=0)
+
+mensagem_banco = Label(page3, text='', font=("Arial", 16))
+mensagem_banco.grid(row=1, column=0)
+
+dt_inicio_semana = Label(page3, text="De:", font=("Arial", 14))
+dt_inicio_semana.grid(row=2, padx=(0, 190), column=0, sticky="e")
+
+dt_inicio_semana = DateEntry(page3, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dt_inicio_semana.grid(row=3, column=0, padx=(150, 0), pady=5, sticky="e")
+
+dt_fim_semana = Label(page3, text="Até:", font=("Arial", 14))
+dt_fim_semana.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
+
+dt_fim_semana = DateEntry(page3, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dt_fim_semana.grid(row=3, column=1, padx=(50, 0), pady=5, sticky="w")
+
+btn_pedidos_semana = Button(page3, text="Ver pedidos meio semana", bg='#C0C0C0', font=("Arial", 16), command= lambda: inserirTabelaTeste('btn'))
+btn_pedidos_semana.grid(row=4)
+#verTodosEventos
+btn_mostrar_eventos = Button(page3, text="Ver todos os eventos", bg='#C0C0C0', font=("Arial", 16), command= lambda:verTodosEventos(ajustes_meio_semana, tabelas.tabelaSemana))
+btn_mostrar_eventos.grid(row=7)
+
+tabelas.criarTabelaMeioSemana(page3)
+tabelas.criarTabela(secondFrame)
+
 #consultarAttBanco()
 
 root.mainloop()

@@ -104,30 +104,31 @@ def converterUnidadeDiferente(produtos):
             unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
             
             if unidadeEstoque != unidadeComposicao or unidadeEstoque != '':
-                print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
-                print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
-                print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
+                if(alterarStringUnidade(produto['nomeProdutoComposicao']) == 'Alecrim Fresco'):
+                    print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
+                    print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
+                    print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
                     
-                produto['unidadeComposicao'] = produto['unidadeEstoque']
+                    produto['unidadeComposicao'] = produto['unidadeEstoque']
                                 
-                print("Calculo da funcao Antes ---->", produto['totalProducao'])
-                a = calcularQtdProducao([produto])[0]
-                print("Calculo da funcao depois ---->", a['totalProducao'])
+                    print("Calculo da funcao Antes ---->", produto['totalProducao'])
+                    a = calcularQtdProducao([produto])[0]
+                    print("Calculo da funcao depois ---->", a['totalProducao'])
                         
-                result = produto['totalProducao'] / produto['PROPPRODUCAO']
-                print("Divisao -->", result)
-                produto['totalProducao'] = result
+                    result = produto['totalProducao'] / produto['PROPPRODUCAO']
+                    print("Divisao -->", result)
+                    produto['totalProducao'] = result
                     
-                if(produto['unidadeAcabado']) == 'CT':
+                    if(produto['unidadeAcabado']) == 'CT':
                         print("CT ->")
-                elif(produto['unidadeAcabado']) == 'PP':
+                    elif(produto['unidadeAcabado']) == 'PP':
                         print("PP ->")
-                elif(produto['unidadeAcabado']) == 'UD':
+                    elif(produto['unidadeAcabado']) == 'UD':
                         print("UD ->")
-                elif(produto['unidadeAcabado']) == 'UM':
+                    elif(produto['unidadeAcabado']) == 'UM':
                         print("UM ->")
               
-                print("------------------------------------------------------------")
+                    print("------------------------------------------------------------")
                     
         except KeyError as e:
             print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
