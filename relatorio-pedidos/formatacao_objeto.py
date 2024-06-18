@@ -1,5 +1,3 @@
-import math
-from sqlalchemy import create_engine
 import pandas as pd
 import json
 
@@ -48,14 +46,14 @@ def alterarStringUnidade(unidade):
         return unidadeCorrigida
     else:
         return unidade   
-            
+
 #Converte as medidas dos produtos de gramas e ml para quilos e litros.
-def converterKg(produto):     
+def converterKg(produto):
     if str(produto['unidade']) == "GR" or str(produto['unidade']) == "ML":
         result = produto['totalProducao'] / 1000 
     else:
         result = produto['totalProducao']
-    return round(result, 2)
+    return round(result, 4)
 
 #Muda a string para a unidade de medida correta.
 def mudarUnidade(unidade):
@@ -65,14 +63,8 @@ def mudarUnidade(unidade):
         return 'LT'
     else:
         return unidade
-    
-#Arredondar o valor da quantidade total de pedidos para 'mais'
-def arredondarValor(row):
-    if row['unidade'] != 'KG' and row['unidade'] != 'ML':
-        return math.ceil(row['totalProducao'])
-    else:
-        return row['totalProducao']
-    
+
+
 #Multiplica a quantidade do produto que vai na receita pela quantidade
 #de pedidos da receita final.
 #Dependendo da unidade de medida em que o produto é vendido, a quantidade
@@ -82,9 +74,6 @@ def calcularQtdProducao(produtosComposicao):
         if e['unidadeAcabado'] == 'PP':
             total = (e["qtdProdutoEvento"] / 10) * e["qtdProdutoComposicao"]
             e["totalProducao"] = total
-        elif e['unidadeAcabado'] == 'CT':
-            total = e['qtdProdutoComposicao'] * e['qtdProdutoEvento']
-            e['totalProducao'] = total
         elif e['unidadeAcabado'] == 'UD':
             total = (e['qtdProdutoEvento'] / 100) * e['qtdProdutoComposicao']
             e['totalProducao'] = total
@@ -95,43 +84,6 @@ def calcularQtdProducao(produtosComposicao):
             total = e["qtdProdutoComposicao"] * e["qtdProdutoEvento"]
             e["totalProducao"] = total
     return produtosComposicao
-
-def converterUnidadeDiferente(produtos):
-     for produto in produtos:
-        try:
-            #Aplicando a alterarStringUnidade a todos os campos necessarios da lista PRODUTO
-            unidadeEstoque = alterarStringUnidade(produto['unidadeEstoque'])
-            unidadeComposicao =  alterarStringUnidade(produto['unidadeComposicao'])
-            
-            if unidadeEstoque != unidadeComposicao or unidadeEstoque != '':
-                if(alterarStringUnidade(produto['nomeProdutoComposicao']) == 'Alecrim Fresco'):
-                    print("Unidade de estoque diferente da unidade de composição", produto['nomeProdutoComposicao'], unidadeEstoque, unidadeComposicao)
-                    print("(1" ,unidadeEstoque, " de equivale a) ->", produto['PROPPRODUCAO'], produto['unidadeComposicao'])
-                    print("(id do Evento) ->", produto['idEvento'], "(Nome do evento) -> ", produto['nomeEvento'],"(Nome do produto) ->", produto['DESCRICAO'], "(Qtd produto que o evento vai usar) ->", produto['qtdProdutoEvento'])
-                    
-                    produto['unidadeComposicao'] = produto['unidadeEstoque']
-                                
-                    print("Calculo da funcao Antes ---->", produto['totalProducao'])
-                    a = calcularQtdProducao([produto])[0]
-                    print("Calculo da funcao depois ---->", a['totalProducao'])
-                        
-                    result = produto['totalProducao'] / produto['PROPPRODUCAO']
-                    print("Divisao -->", result)
-                    produto['totalProducao'] = result
-                    
-                    if(produto['unidadeAcabado']) == 'CT':
-                        print("CT ->")
-                    elif(produto['unidadeAcabado']) == 'PP':
-                        print("PP ->")
-                    elif(produto['unidadeAcabado']) == 'UD':
-                        print("UD ->")
-                    elif(produto['unidadeAcabado']) == 'UM':
-                        print("UM ->")
-              
-                    print("------------------------------------------------------------")
-                    
-        except KeyError as e:
-            print(f"Key {e} not found in produto {produto['nomeProdutoComposicao']}.")
 
 #Executa a função que calcula o ajuste em cada produto da lista.
 def aplicarAjustes(produtosComposicao, ajustes):
@@ -148,6 +100,16 @@ def adicionarEstoque(produtos, estoque):
             if p['idProdutoComposicao'] == e['RDX_PRODUTO']:
                 p['estoque'] = e['SALDOESTOQUE']
                 p['unidadeEstoque'] = e['UN']
+
+def igualarUnEstoque(produtos):
+    ...
+    for prod in produtos:
+        alterarStringUnidade(prod['unidadeEstoque'])
+        alterarStringUnidade(prod['unidadeComposicao'])
+        #print(prod)
+        if prod['unidadeComposicao'] != prod['unidadeEstoque']:
+            prod['qtdProdutoComposicao'] = prod['qtdProdutoComposicao'] / prod['unidadeProp']
+            prod['unidadeComposicao'] = prod['unidadeEstoque']
 
 #Junta as subdivisões da linha de produção das receitas em um só grupo.
 #Por exemplo, as linhas de S1 até S6, são agrupadas apenas como sal.
@@ -183,20 +145,27 @@ def unirListasComposicao(acabados, semiAcabados):
     df = pd.DataFrame(acabados)
     result = df.groupby(['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'unidade', 'linha', 'estoque', 'unidadeEstoque','produtoAcabado'])[['totalProducao']].sum().reset_index()
     result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
-    result['totalProducao'] = result['totalProducao'].round(4)
+    result['totalProducao'] = result['totalProducao'].round(2)
     res = converterPJson(result)
     dadosOrdenados = sorted(res, key=lambda p:p['nomeProdutoComposicao'])
     return dadosOrdenados   
 
 #Remove versões alteradas de uma receita e deixa somente uma receita original
 def removerReceitasAlteradas(lista_completa:list):
-    copia_lista = lista_completa
-    for p_copia in copia_lista:
-        for p_original in lista_completa:
-            if p_original['idProdutoAcabado'] == p_copia['idProdutoAcabado'] and p_original['DTINC'] > p_copia['DTINC']:
-                lista_completa.remove(p_original)
-            else:
-                return
+    lista_remocao = []
+    nova_lista = []
+
+    for copia in lista_completa:
+        for prod in lista_completa:
+            if int(prod['idProdutoAcabado']) == int(copia['idProdutoAcabado']) and int(prod['idProdutoComposicao']) == int(prod['idProdutoComposicao']) and prod['DTINC'] > copia['DTINC']:
+                lista_remocao.append(prod)
+
+    # Criar uma nova lista excluindo os elementos a serem removidos
+    for p in lista_remocao:
+        if p in lista_completa:
+            lista_completa.remove(p)
+
+    return nova_lista
 
 
 #Função que soma a quantidade total de cada pedido
@@ -221,10 +190,6 @@ def somarProdutosEvento(produtosComposicao):
     #Muda a string de unidade de medida de GR para KG.
     result['unidade'] = result['unidade'].apply(mudarUnidade)
     
-    #converte os valores para mais
-    result['totalProducao'] = result.apply(arredondarValor, axis=1)
-    
-    
     #Organiza as colunas na ordem que devem aparecer na tabela.
     result = result[['idProdutoComposicao', 'nomeProdutoComposicao', 'classificacao', 'linha', 'estoque', 'unidadeEstoque', 'totalProducao', 'unidade', 'produtoAcabado']]
     
@@ -232,5 +197,6 @@ def somarProdutosEvento(produtosComposicao):
     dadosDesserializados = json.loads(resultJson)
     #Ordena os produtos em ordem alfabetica.
     dadosOrdenados = sorted(dadosDesserializados, key=lambda p:p['nomeProdutoComposicao'])
-    
     return dadosOrdenados
+
+

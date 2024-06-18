@@ -26,7 +26,7 @@ def criarTabela(frame):
     table.column('Un. Estoque', width=80, anchor=CENTER)
     table.column('Qtd. Producao', width=100, anchor=CENTER)
     table.column('Unidade', width=80, anchor=CENTER)
-    table.bind("<ButtonRelease>", lambda event: armazenarIdProduto(event, table))
+    table.bind("<ButtonRelease>", lambda event: armazenarIdProduto(event, table, 'acabados'))
     
     global tableSemiAcabados 
     tableSemiAcabados = ttk.Treeview(frame, columns = ('ID', 'Produto', 'Classificacao', 'Linha', 'Estoque', 'Un. Estoque', 'Qtd. Producao', 'Unidade'), show = 'headings')
@@ -38,7 +38,7 @@ def criarTabela(frame):
     tableSemiAcabados.heading('Un. Estoque', text = 'Un. Estoque')
     tableSemiAcabados.heading('Qtd. Producao', text = 'Qtd. Producao')
     tableSemiAcabados.heading('Unidade', text = 'Unidade')
-    tableSemiAcabados.grid(row=9, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    tableSemiAcabados.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
 
     tableSemiAcabados.column('ID', width=80, anchor=CENTER)
     tableSemiAcabados.column('Produto', width=300, anchor=CENTER)
@@ -48,15 +48,19 @@ def criarTabela(frame):
     tableSemiAcabados.column('Un. Estoque', width=80, anchor=CENTER)
     tableSemiAcabados.column('Qtd. Producao', width=100, anchor=CENTER)
     tableSemiAcabados.column('Unidade', width=80, anchor=CENTER)
-    tableSemiAcabados.bind("<ButtonRelease>", lambda event: armazenarIdProduto(event, tableSemiAcabados))
+    tableSemiAcabados.bind("<ButtonRelease>", lambda event: armazenarIdProduto(event, tableSemiAcabados, 'semi-acabados'))
 
 #Seleciona a linha de uma tabela
-def armazenarIdProduto(event, tabela):
+def armazenarIdProduto(event, tabela, _tptabela):
     global tabela_atual
     indice = tabela.selection()
     if indice:
-        tabela_atual = tabela.item(indice)['values'][0]
-        print(tabela_atual)
+        #tabela_atual = tabela.item(indice)['values'][0]
+        tabela_atual = {
+            'id_produto':tabela.item(indice)['values'][0],
+            'tipo_tabela':_tptabela    
+        }
+        # print(tabela_atual)
 
 #Recria uma tabela sempre que há uma atualização ou que o usuário realiza uma
 #nova pesquisa.
@@ -131,6 +135,24 @@ def criarTabelaEvento(nova_janela):
     tabelaEventos.column('Qtd Evento', width=80, anchor=CENTER)
     tabelaEventos.column('Unidade', width=60, anchor=CENTER)
 
+
+#Cria a tabela que mostra os eventos e as receitas finais em que cada
+#produto da tabela será usado
+def criarTabelaInfoSA(nova_janela):
+    global tbl_info_sa
+    tbl_info_sa = ttk.Treeview(nova_janela, columns = ('Semi-acabado', 'Composição', 'Qtd Evento', 'Unidade'), show = 'headings')
+    tbl_info_sa.heading('Semi-acabado', text = 'Semi-acabado')
+    tbl_info_sa.heading('Composição', text = 'Composição')
+    tbl_info_sa.heading('Qtd Evento', text = 'Qtd Evento')
+    tbl_info_sa.heading('Unidade', text = 'Unidade')
+    tbl_info_sa.grid(row=1, column=0, padx=(80, 0), pady=10, sticky="nsew")
+
+    tbl_info_sa.column('Semi-acabado', width=160, anchor=CENTER)
+    tbl_info_sa.column('Composição', width=320, anchor=CENTER)
+    tbl_info_sa.column('Qtd Evento', width=80, anchor=CENTER)
+    tbl_info_sa.column('Unidade', width=60, anchor=CENTER)
+
+
 #Cria a tabela que mostra a quantidade daquele produto pedida no mesmo período do ano anterior.
 def criarTabelaAnoAnterior(nova_janela):
     global tbl_ano_anterior
@@ -149,5 +171,52 @@ def criarTabelaAnoAnterior(nova_janela):
     tbl_ano_anterior.column('Total ano anterior', width=130, anchor=CENTER)
     tbl_ano_anterior.column('Unidade', width=100, anchor=CENTER)
     tbl_ano_anterior.column('Composição acabado', width=200, anchor=CENTER)
+
+def tabelaControleEstoque(frame):
+    global tbl_controle
+    tbl_controle = ttk.Treeview(frame, columns = ('ID', 'Produto', 'UN', 'Cód. Produto', 'Saldo'), show='headings')
+    tbl_controle.heading('ID', text='ID')
+    tbl_controle.heading('Produto', text='Produto')
+    tbl_controle.heading('UN', text='UN')
+    tbl_controle.heading('Cód. Produto', text='Cod. Produto')
+    tbl_controle.heading('Saldo', text='Saldo')
+    tbl_controle.grid(row=4, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    
+    tbl_controle.column('ID', width=100, anchor=CENTER)
+    tbl_controle.column('Produto', width=300, anchor=CENTER)
+    tbl_controle.column('UN', width=100, anchor=CENTER)
+    tbl_controle.column('Cód. Produto', width=100, anchor=CENTER)
+    tbl_controle.column('Saldo', width=100, anchor=CENTER)
+    tbl_controle.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_controle))
+
+def tabelaCtrlSemiacabados(frame):
+    global tbl_ctrl_semi
+    tbl_ctrl_semi = ttk.Treeview(frame, columns = ('ID', 'Produto', 'Saldo', 'UN',), show='headings')
+    tbl_ctrl_semi.heading('ID', text='ID')
+    tbl_ctrl_semi.heading('Produto', text='Produto')
+    tbl_ctrl_semi.heading('Saldo', text='Saldo')
+    tbl_ctrl_semi.heading('UN', text='UN')
+    tbl_ctrl_semi.grid(row=4, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    
+    tbl_ctrl_semi.column('ID', width=100, anchor=CENTER)
+    tbl_ctrl_semi.column('Produto', width=300, anchor=CENTER)
+    tbl_ctrl_semi.column('Saldo', width=100, anchor=CENTER)
+    tbl_ctrl_semi.column('UN', width=100, anchor=CENTER)
+    
+    tbl_ctrl_semi.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_ctrl_semi))
+
+def armazenarInfoProduto(event, _tblControle):
+    #global dados_produto
+    indice = _tblControle.selection()
+    if indice:
+        p = _tblControle.item(indice)['values']
+        print(p)
+        return p
+
+# def armazenarInfoSemiacabado(event):
+#     indice = tbl_controle.selection()
+#     if indice:
+#         p = tbl_controle.item(indice)['values']
+#         return p
 
     
