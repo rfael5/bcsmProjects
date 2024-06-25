@@ -210,7 +210,6 @@ def armazenarInfoProduto(event, _tblControle):
     indice = _tblControle.selection()
     if indice:
         p = _tblControle.item(indice)['values']
-        print(p)
         return p
 
 # def armazenarInfoSemiacabado(event):

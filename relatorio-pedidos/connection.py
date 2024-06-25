@@ -281,6 +281,7 @@ def getControleSemiAcabados():
             WHERE P.ESTOQUE = 'S' AND P.IDX_NEGOCIO = 'Produtos Acabados' AND M.SITUACAOOP = 'U'
             GROUP BY PK_PRODUTO, P.DESCRICAO, P.UN, P.CODPRODUTO
         ) AND PC.ESTOQUE = 'S'
+        AND PC.IDX_NEGOCIO = 'Produtos Semi Acab.'
     '''
     
     res = receberDados(query)

@@ -14,26 +14,21 @@ class EstoqueService:
         self.ctrl_acabados = None        
         self.ctrl_semiacabados = None
         
-        
     
     def formatarProdutosControle(self):
-        for x in self.sa_controle:
-            print(x)
         df_ctrl_sa = DataFrame(self.sa_controle)
         df_ctrl_sa = df_ctrl_sa.groupby(['idxProduto', 'descricao'])[['saldo']].sum().reset_index()
         sa_controle_json = json.loads(df_ctrl_sa.to_json(orient='records'))
         
-        print(df_ctrl_sa)
-        
         df_semiacabados = DataFrame(self.semiacabados_tpa)
         df_semiacabados['totalProducao'] = df_semiacabados.apply(self.calcularSaldoSemiacabados, axis=1)
-        print(df_semiacabados)
         df_semiacabados = df_semiacabados.apply(self.calcularSaldoSA, controle=sa_controle_json, axis=1)
         _semiacabadosjson = json.loads(df_semiacabados.to_json(orient='records'))
         self.ctrl_semiacabados = _semiacabadosjson
         
         df_controle = DataFrame(self.p_controle)
         df_controle = df_controle.groupby(['pkProduto', 'descricao'])[['saldo']].sum().reset_index()
+        #print(df_controle)
         controle_json = json.loads(df_controle.to_json(orient='records'))
         
         df_tpa = DataFrame(self.produtos_tpa)
@@ -46,19 +41,21 @@ class EstoqueService:
     def calcularSaldo(self, row, controle):
         if math.isnan(row['somaQuantidade']):
             row['somaQuantidade'] = 0
+        row['somaQuantidade'] = (row['somaQuantidade'] * 100) * -1
         for prod in controle:
             if int(row['PK_PRODUTO']) == int(prod['pkProduto']):
-                row['somaQuantidade'] = prod['saldo'] - (row['somaQuantidade'] * 100)
+                row['somaQuantidade'] = prod['saldo'] + row['somaQuantidade']
         return row
     
     def calcularSaldoSA(self, row, controle):
+        row['totalProducao'] = row['totalProducao'] * -1
+        if row['UN'] == 'GR':
+            row['totalProducao'] = row['totalProducao'] / 1000
+            row['UN'] = 'KG'
         for prod in controle:
             if int(row['IDX_PRODUTO']) == int(prod['idxProduto']):
-                if row['UN'] == 'GR':
-                    row['totalProducao'] = prod['saldo'] - (row['totalProducao'] / 1000)
-                    row['UN'] = 'KG'
-                else:
-                    row['totalProducao'] = prod['saldo'] - row['totalProducao'] 
+                row['totalProducao'] = prod['saldo'] + row['totalProducao'] 
+                # row['totalProducao'] = prod['saldo'] - row['totalProducao']
         return row
     
     def calcularSaldoSemiacabados(self, row):

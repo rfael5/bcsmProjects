@@ -18,6 +18,7 @@ import controleEstoqueService
 # controleEstoque.formatarProdutosControle()
 #db_ctrl_estoque.create_sqlite_database('controle_estoque.db')
 db_ctrl_estoque.getEstoqueSA()
+db_ctrl_estoque.excluirLinha(24)
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
@@ -403,7 +404,7 @@ def inserirTabelaControle():
         data_sa = (id, produto, saldo, un)
         tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa)
 
-def janelaAttEstoque(_tbl, tp_controle):
+def janelaAttEstoque(_tbl, tp_controle, tp_att):
     dados_prod = tabelas.armazenarInfoProduto(Event, _tbl)
     
     if dados_prod == None:
@@ -414,27 +415,39 @@ def janelaAttEstoque(_tbl, tp_controle):
         janela_soma.title("Atualização estoque")
         janela_soma.geometry("400x300")
         
+        if tp_att == 'soma':
+            _titulo = 'Atualizar estoque'
+            titulo_botao = 'Adicionar'
+        else:
+            _titulo = 'Subtrair do estoque'
+            titulo_botao = 'Subtrair'
+        
         titulo_janela = Label(janela_soma, text=f"{dados_prod[1]}", font=("Arial", 14))
         titulo_janela.grid(row=0, padx=(40, 0), pady=(0,20))
         
-        lbl_add_saldo = Label(janela_soma, text = 'Atualizar estoque:')
+        lbl_add_saldo = Label(janela_soma, text = f'{_titulo}:')
         lbl_add_saldo.grid(row=1, padx=(40, 0))
         att_var = ''
         att_saldo = Entry(janela_soma, textvariable=att_var, bd=4)
         att_saldo.grid(row=2, padx=(40, 0), pady=(0,20))
         
-        btn_add = Button(janela_soma, text="Adicionar", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle))
+        btn_add = Button(janela_soma, text=f"{titulo_botao}", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle, tp_att))
         btn_add.grid(row=3, sticky='nsew', padx=(40, 0), pady=(0,20))
 
 
-def attSaldo(produto, att_saldo, tp_controle):
+def attSaldo(produto, att_saldo, tp_controle, tp_att):
     if tp_controle == 'acabados':
         novo_produto = {
             "pkProduto": produto[0],
             "descricao": produto[1],
             "saldo": att_saldo
         }
-        db_ctrl_estoque.adicionarEstoque(novo_produto)
+        if tp_att == 'soma':
+            db_ctrl_estoque.adicionarEstoque(novo_produto)
+        else:
+            novo_produto['saldo'] = int(novo_produto['saldo']) * -1
+            print(novo_produto)
+            db_ctrl_estoque.adicionarEstoque(novo_produto)
         db_ctrl_estoque.getEstoqueCompleto()
     else:
         adicao_saldo = {
@@ -442,7 +455,11 @@ def attSaldo(produto, att_saldo, tp_controle):
             "descricao":produto[1],
             "saldo":att_saldo
         }
-        db_ctrl_estoque.addEstoqueSA(adicao_saldo)
+        if tp_att == 'soma':
+            db_ctrl_estoque.addEstoqueSA(adicao_saldo)
+        else:
+            adicao_saldo['saldo'] = int(adicao_saldo['saldo']) * -1
+            db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         db_ctrl_estoque.getEstoqueSA
     
     inserirTabelaControle()
@@ -614,11 +631,14 @@ input_saldo.bind("<KeyRelease>", lambda event: filtrarListaEstoque(event, 'acaba
 
 #Row 4 - Tabela controle estoque
 
-btn_somar_estoque = Button(page2, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_controle, 'acabados'))
+btn_somar_estoque = Button(page2, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_controle, 'acabados', 'soma'))
 btn_somar_estoque.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_atualisar = Button(page2, text="Atualizar saldo", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaControle)
 btn_atualisar.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+
+btn_acerto_estoque = Button(page2, text="Aplicar acerto de estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_controle, 'acabados', 'subtracao'))
+btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 ####################################################
 #PÁGINA 3
@@ -634,11 +654,14 @@ input_saldo_sa.bind("<KeyRelease>", lambda event: filtrarListaEstoque(event, 'se
 
 #Row 4 - Tabela controle semi-acabados
 
-btn_somar_estoque = Button(page3, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados'))
+btn_somar_estoque = Button(page3, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados', 'soma'))
 btn_somar_estoque.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_atualisar = Button(page3, text="Atualizar saldo", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaControle)
 btn_atualisar.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+
+btn_acerto_estoque = Button(page3, text="Aplicar acerto de estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados', 'subtracao'))
+btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 
 tabelas.criarTabela(secondFrame)

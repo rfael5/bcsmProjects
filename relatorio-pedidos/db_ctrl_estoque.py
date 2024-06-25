@@ -110,7 +110,7 @@ def getEstoqueCompleto():
         with sqlite3.connect(caminho_bd) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute('SELECT pkProduto, descricao, saldo FROM ctrl_estoque')
+            cursor.execute('SELECT id, pkProduto, descricao, saldo FROM ctrl_estoque')
             rows = cursor.fetchall()
             produtos = [dict(row) for row in rows]
             return produtos
@@ -153,7 +153,19 @@ def atualizarSaldoEstoque(produto_id, qtd):
             cursor.execute(query)
             conn.commit()
     except sqlite3.Error as e:
-        print(e) 
+        print(e)
+
+def excluirLinha(id_linha):
+    try:
+        with sqlite3.connect(caminho_bd) as conn:
+            cursor = conn.cursor()
+            query = f'''
+                DELETE FROM ctrl_estoque WHERE id = {id_linha}
+            '''
+            cursor.execute(query)
+            conn.commit()
+    except sqlite3.Error as e:
+        print(e)
 
 # if __name__ == '__main__':
 #     create_sqlite_database("controle_estoque.db")
