@@ -17,6 +17,7 @@ class EstoqueService:
     
     def formatarProdutosControle(self):
         df_ctrl_sa = DataFrame(self.sa_controle)
+        print(df_ctrl_sa)
         df_ctrl_sa = df_ctrl_sa.groupby(['idxProduto', 'descricao'])[['saldo']].sum().reset_index()
         sa_controle_json = json.loads(df_ctrl_sa.to_json(orient='records'))
         
@@ -27,6 +28,7 @@ class EstoqueService:
         self.ctrl_semiacabados = _semiacabadosjson
         
         df_controle = DataFrame(self.p_controle)
+        print(df_controle)
         df_controle = df_controle.groupby(['pkProduto', 'descricao'])[['saldo']].sum().reset_index()
         #print(df_controle)
         controle_json = json.loads(df_controle.to_json(orient='records'))

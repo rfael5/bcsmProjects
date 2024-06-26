@@ -9,7 +9,8 @@ def create_sqlite_database(filename):
         conn = sqlite3.connect(filename)
         print(sqlite3.sqlite_version)
         # criar_tabela()
-        # add_produto()
+        add_produto()
+        add_sa()
         #getEstoqueCompleto()
     except sqlite3.Error as e:
         print(e)
@@ -24,7 +25,12 @@ def criar_tabela():
                 id INTEGER PRIMARY KEY,
                 pkProduto int NOT NULL,
                 descricao text NOT NULL,
-                saldo int NOT NULL
+                saldo int NOT NULL,
+                unidade text NOT NULL,
+                dataMov text NOT NULL,
+                tipoMov text NOT NULL,
+                motivo text NOT NULL
+                
             );
         """
     ]
@@ -45,7 +51,11 @@ def criarTblControleSA():
             id INTEGER PRIMARY KEY,
             idxProduto int NOT NULL,
             descricao text NOT NULL,
-            saldo int NOT NULL
+            saldo int NOT NULL,
+            unidade text NOT NULL,
+            dataMov text NOT NULL,
+            tipoMov text NOT NULL,
+            motivo text NOT NULL
         )
     """
     try:
@@ -59,14 +69,15 @@ def criarTblControleSA():
 
 def adicionarEstoque(att):
     query = '''
-        INSERT INTO ctrl_estoque (pkProduto, descricao, saldo) 
-            VALUES (?, ?, ?)
+        INSERT INTO ctrl_estoque (pkProduto, descricao, saldo, unidade, dataMov, tipoMov, motivo) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
     '''
     
     try:
         with sqlite3.connect(caminho_bd) as conn:
             cursor = conn.cursor()
-            cursor.execute(query, (att['pkProduto'], att['descricao'], att['saldo']))
+            cursor.execute(query, (att['pkProduto'], att['descricao'], att['saldo'], att['unidade'], att['dataMov'],
+                                   att['tipoMov'], att['motivo']))
             conn.commit()
     except sqlite3.Error as e:
         print(e)
@@ -74,28 +85,48 @@ def adicionarEstoque(att):
 
 def addEstoqueSA(att):
     query = '''
-        INSERT INTO ctrl_semi_acabados (idxProduto, descricao, saldo)
+        INSERT INTO ctrl_semi_acabados (idxProduto, descricao, saldo, unidade, dataMov, tipoMov, motivo)
             VALUES (?, ?, ?)
     '''
     
     try:
         with sqlite3.connect(caminho_bd) as conn:
             cursor = conn.cursor()
-            cursor.execute(query, (att['idxProduto'], att['descricao'], att['saldo']))
+            cursor.execute(query, (att['idxProduto'], att['descricao'], att['saldo'], att['unidade'], att['dataMov'],
+                                   att['tipoMov'], att['motivo']))
             conn.commit()
     except sqlite3.Error as e:
         print(e)
 
 def add_produto():
-    sql = '''INSERT INTO ctrl_estoque (pkProduto, descricao, saldo) VALUES (?, ?, ?)'''
+    sql = '''INSERT INTO ctrl_estoque (pkProduto, descricao, saldo, unidade, dataMov, tipoMov, motivo) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)'''
     
     try:
         with sqlite3.connect(caminho_bd) as conn:
             #produto = ('Coxinha de Frango com Catupiry', 3500, '2024-06-10')
             lst_produtos = [
-                (3851, 'Abacate', 3000),
-                (2995, 'Abobora Moranga', 3000),
-                (315, 'Açafrão', 3000)
+                (3851, 'Abacate', 3000, 'UN', '25/06/2024', 'soma', ''),
+                (2995, 'Abobora Moranga', 3000, 'UN', '25/06/2024', 'soma', ''),
+                (315, 'Açafrão', 3000, 'UN', '25/06/2024', 'soma', '')
+            ]
+            cursor = conn.cursor()
+            for p in lst_produtos:
+                cursor.execute(sql, p)
+                conn.commit()
+        print('Produto criado')
+    except sqlite3.Error as e:
+        print(e)
+
+def add_sa():
+    sql = '''INSERT INTO ctrl_semi_acabados (idxProduto, descricao, saldo, unidade, dataMov, tipoMov, motivo) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)'''
+    
+    try:
+        with sqlite3.connect(caminho_bd) as conn:
+            #produto = ('Coxinha de Frango com Catupiry', 3500, '2024-06-10')
+            lst_produtos = [
+                (3030, 'Massa p/ coxinha', 3000, 'KG', '25/06/2024', 'soma', '')
             ]
             cursor = conn.cursor()
             for p in lst_produtos:
@@ -110,7 +141,7 @@ def getEstoqueCompleto():
         with sqlite3.connect(caminho_bd) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute('SELECT id, pkProduto, descricao, saldo FROM ctrl_estoque')
+            cursor.execute('SELECT * FROM ctrl_estoque')
             rows = cursor.fetchall()
             produtos = [dict(row) for row in rows]
             return produtos
@@ -122,7 +153,7 @@ def getEstoqueSA():
         with sqlite3.connect(caminho_bd) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute('SELECT idxProduto, descricao, saldo FROM ctrl_semi_acabados')
+            cursor.execute('SELECT * FROM ctrl_semi_acabados')
             rows = cursor.fetchall()
             produtos = [dict(row) for row in rows]
             return produtos
@@ -161,6 +192,18 @@ def excluirLinha(id_linha):
             cursor = conn.cursor()
             query = f'''
                 DELETE FROM ctrl_estoque WHERE id = {id_linha}
+            '''
+            cursor.execute(query)
+            conn.commit()
+    except sqlite3.Error as e:
+        print(e)
+
+def excluirTabela(nome_tabela):
+    try:
+        with sqlite3.connect(caminho_bd) as conn:
+            cursor = conn.cursor()
+            query = f'''
+                DROP TABLE IF EXISTS {nome_tabela}
             '''
             cursor.execute(query)
             conn.commit()

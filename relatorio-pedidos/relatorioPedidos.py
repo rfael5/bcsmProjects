@@ -17,8 +17,8 @@ import controleEstoqueService
 # controleEstoque = controleEstoqueService.EstoqueService()
 # controleEstoque.formatarProdutosControle()
 #db_ctrl_estoque.create_sqlite_database('controle_estoque.db')
-db_ctrl_estoque.getEstoqueSA()
-db_ctrl_estoque.excluirLinha(24)
+# db_ctrl_estoque.criar_tabela()
+# db_ctrl_estoque.criarTblControleSA()
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
@@ -31,7 +31,13 @@ def formatarDataPedido(data):
     seconds_since_epoch = milliseconds_since_epoch / 1000
     date_object = datetime.fromtimestamp(seconds_since_epoch, timezone.utc)
     formatted_date = date_object.strftime('%d/%m/%Y')
-    return formatted_date 
+    return formatted_date
+
+def recuperarHoraAtual():
+    data_hora_atual = datetime.now()
+    formato = "%Y-%m-%d_%H-%M-%S"
+    data_hora_formatada = data_hora_atual.strftime(formato)
+    return data_hora_formatada
 
 #Pega a data inserida na interface, formata ela, e passa como parâmetro
 #na função que executa a query.
@@ -390,8 +396,13 @@ def inserirTabelaControle():
         un = produto['UN']
         cod_produto = produto['CODPRODUTO']
         saldo = produto['somaQuantidade']
+        if saldo >= 0:
+            total = 'black'
+        else:
+            total = 'red'
         data = (id, descricao, un, cod_produto, saldo)
-        tabelas.tbl_controle.insert(parent='', index=0, values=data)
+        tabelas.tbl_controle.insert(parent='', index=0, values=data, tags=total)
+    tabelas.tbl_controle.tag_configure("red", foreground="red")
     
     global saprod_estoque
     saprod_estoque = controleEstoque.ctrl_semiacabados
@@ -401,8 +412,13 @@ def inserirTabelaControle():
         produto = sa['DESCRICAO']
         saldo = sa['totalProducao']
         un = sa['UN']
+        if saldo >= 0:
+            total_sa = 'black'
+        else:
+            total_sa = 'red'
         data_sa = (id, produto, saldo, un)
-        tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa)
+        tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa, tags=total_sa)
+    tabelas.tbl_ctrl_semi.tag_configure("red", foreground="red")
 
 def janelaAttEstoque(_tbl, tp_controle, tp_att):
     dados_prod = tabelas.armazenarInfoProduto(Event, _tbl)
@@ -440,7 +456,11 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att):
         novo_produto = {
             "pkProduto": produto[0],
             "descricao": produto[1],
-            "saldo": att_saldo
+            "saldo": att_saldo,
+            "unidade": produto[2],
+            "dataMov": recuperarHoraAtual(),
+            "tipoMov": tp_att,
+            "motivo": ''
         }
         if tp_att == 'soma':
             db_ctrl_estoque.adicionarEstoque(novo_produto)
@@ -453,7 +473,11 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att):
         adicao_saldo = {
             "idxProduto":produto[0],
             "descricao":produto[1],
-            "saldo":att_saldo
+            "saldo":att_saldo,
+            "unidade": produto[3],
+            "dataMov": recuperarHoraAtual(),
+            "tipoMov": tp_att,
+            "motivo": ''
         }
         if tp_att == 'soma':
             db_ctrl_estoque.addEstoqueSA(adicao_saldo)
