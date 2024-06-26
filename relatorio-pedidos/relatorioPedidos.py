@@ -366,22 +366,37 @@ def gerarPlanilha():
             composicao_semiacabados = list(filter(lambda produto:produto['produtoAcabado'] == False, produtos))
             separarProdutosEvento(composicao_semiacabados)
 
-#Essa função é executada de 10 em 10 segundos e confere se foi feito algum pedido
-#depois que a lista de pedidos já foi gerada, para ser entregue naquela semana.
-# def consultarAttBanco():
-#     #global hora_atual
-#     hora_atual = datetime.now()
-#     hora_ultima_checagem.configure(text=f'Momento da última checagem: {str(hora_atual)}')
-#     #Caso haja novos pedidos, essa função irá buscar esses pedidos de última hora no banco
-#     #e mostrá-los em uma outra janela na nossa interface
-#     inserirTabelaTeste('timer')
-#     page2.after(10000, consultarAttBanco)
 
+def inserirTabelaMotivos():
+    motivos = controleEstoqueService.EstoqueService()
+    motivosAcabados = motivos.p_controle
+    motivosSemiAcabados = motivos.sa_controle 
+     
+    for x in motivosAcabados:
+        if(x['tipoMov'] == 'subtracao'):
+            id = x['pkProduto']
+            descricao = x['descricao']
+            motivo = x['motivo']
+            subtracao = x['saldo']
+            data = (id, descricao, motivo, subtracao, recuperarHoraAtual())
+            tabelas.tbl_motivo.insert(parent='', index=0, values=data)
+            print(x)
+
+    for y in motivosSemiAcabados:
+        if(y['tipoMov'] == 'subtracao'):
+            id = y['idxProduto']
+            descricao = y['descricao']
+            motivo = y['motivo']
+            subtracao = y['saldo']
+            data = (id, descricao, motivo, subtracao, recuperarHoraAtual())
+            tabelas.tbl_motivo.insert(parent='', index=0, values=data)
+            print(y)
+     
 def inserirTabelaControle():
-    controleEstoque = controleEstoqueService.EstoqueService()
-    controleEstoque.formatarProdutosControle()
     global prod_estoque
-    #prod_estoque = controleEstoqueService.formatarProdutosControle()
+    controleEstoque = controleEstoqueService.EstoqueService()
+    
+    controleEstoque.formatarProdutosControle()
     prod_estoque = controleEstoque.ctrl_acabados
     tabelas.tbl_controle.delete(*tabelas.tbl_controle.get_children())
     for produto in prod_estoque:
@@ -390,14 +405,13 @@ def inserirTabelaControle():
         un = produto['UN']
         cod_produto = produto['CODPRODUTO']
         saldo = produto['somaQuantidade']
-        motivo = "sei la kk"
         if saldo >= 0:
             total = 'black'
         else:
             total = 'red'
         data = (id, descricao, un, cod_produto, saldo)
         tabelas.tbl_controle.insert(parent='', index=0, values=data, tags=total)
-        tabelas.tbl_motivo.insert(parent='', index=0, values=(id, descricao, motivo, recuperarHoraAtual()))
+        #tabelas.tbl_motivo.insert(parent='', index=0, values=(id, descricao, motivo, recuperarHoraAtual()))
     tabelas.tbl_controle.tag_configure("red", foreground="red")
     
     global saprod_estoque
@@ -463,7 +477,6 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
             "tipoMov": tp_att,
             "motivo": motivo
         }
-        print(motivo)
         if tp_att == 'soma':
             db_ctrl_estoque.adicionarEstoque(novo_produto)
         else:
@@ -480,7 +493,6 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
             "tipoMov": tp_att,
             "motivo": motivo
         }
-        print(motivo)
         if tp_att == 'soma':
             db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         else:
@@ -489,6 +501,7 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
         db_ctrl_estoque.getEstoqueSA
     
     inserirTabelaControle()
+    inserirTabelaMotivos()
     janela_soma.destroy()
 
 def filtrarListaEstoque(event, tipo_tabela):
@@ -701,9 +714,8 @@ tabelas.criarTabela(secondFrame)  # Cria uma tabela no secondFrame
 tabelas.tabelaControleEstoque(page2)  # Adiciona tabela de controle de estoque na página 2 
 tabelas.tabelaCtrlSemiacabados(page3)  # Adiciona tabela de controle de semiacabados na página 3
 tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 3
-
 inserirTabelaControle() 
-
+inserirTabelaMotivos()
 root.mainloop()  # Inicia o loop principal do Tkinter
 # lb1 = Label(page2, text='I am page 2')
 # lb1.grid(pady=20)

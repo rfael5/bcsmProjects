@@ -106,9 +106,9 @@ def add_produto():
         with sqlite3.connect(caminho_bd) as conn:
             #produto = ('Coxinha de Frango com Catupiry', 3500, '2024-06-10')
             lst_produtos = [
-                (3851, 'Abacate', 3000, 'UN', '25/06/2024', 'soma', ''),
-                (2995, 'Abobora Moranga', 3000, 'UN', '25/06/2024', 'soma', ''),
-                (315, 'Açafrão', 3000, 'UN', '25/06/2024', 'soma', '')
+                (3851, 'AAAAAAAAAAATESTE', 35000, 'UN', '25/06/2024', 'soma', ''),
+                (2995, 'AAAATEST2', 34000, 'UN', '25/06/2024', 'soma', ''),
+                (315, 'TESTE3', 3000, 'UN', '25/06/2024', 'soma', '')
             ]
             cursor = conn.cursor()
             for p in lst_produtos:

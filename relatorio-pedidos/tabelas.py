@@ -207,16 +207,18 @@ def tabelaCtrlSemiacabados(frame):
 
 def tabelaMotivo(frame):
     global tbl_motivo
-    tbl_motivo = ttk.Treeview(frame, columns = ('ID', 'Produto', 'Motivo', 'Data e hora'), show='headings')
+    tbl_motivo = ttk.Treeview(frame, columns = ('ID', 'Produto', 'Motivo', 'Saldo', 'Data e hora'), show='headings')
     tbl_motivo.heading('ID', text='ID')
     tbl_motivo.heading('Produto', text='Produto')
     tbl_motivo.heading('Motivo', text='Motivo')
+    tbl_motivo.heading('Saldo', text='Subtração')
     tbl_motivo.heading('Data e hora', text='Data e hora')
     tbl_motivo.grid(row=10, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
     
     tbl_motivo.column('ID', width=100, anchor=CENTER)
     tbl_motivo.column('Produto', width=100, anchor=CENTER)
     tbl_motivo.column('Motivo', width=300, anchor=CENTER)
+    tbl_motivo.column('Saldo', width=100, anchor=CENTER)
     tbl_motivo.column('Data e hora', width=100, anchor=CENTER)
     
     tbl_motivo.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_motivo))
