@@ -86,7 +86,7 @@ def adicionarEstoque(att):
 def addEstoqueSA(att):
     query = '''
         INSERT INTO ctrl_semi_acabados (idxProduto, descricao, saldo, unidade, dataMov, tipoMov, motivo)
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
     '''
     
     try:

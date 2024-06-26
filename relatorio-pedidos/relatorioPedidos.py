@@ -100,9 +100,6 @@ def setarData(tipo_requisicao):
         tabelas.criarTabela(secondFrame)
         return None
 
-def checarEventosNaLista():
-    for evento in tabelas.tabelaSemana.get_children():
-        print(tabelas.tabelaSemana.item(evento))
 
 #Mesmo fluxo da função acima setarData(), porém para os pedidos feitos
 #depois que a lista ja foi gerada para serem entregues naquela mesma semana.
@@ -198,7 +195,6 @@ def formatarDataPedido(data):
 #Essa função é executada e mostra as receitas em que aquele produto vai ser usado, os
 #clientes que as pediram, e a data de entrega.
 def verTodosEventos(lista_produtos, tabela):
-    print(f"Tabela atual: {tabelas.tabela_atual}")
     indice = tabela.selection()
     if indice:
         produto = tabela.item(indice)['values'][0]
@@ -364,11 +360,9 @@ def gerarPlanilha():
         messagebox.showinfo('Lista vazia', 'Não há eventos nesse período de tempo') 
     else:
         if radiobutton_variable.get() == 1:
-            print("Gerar planilha acabados")
             composicao_acabados = list(filter(lambda produto:produto['produtoAcabado'] == True, produtos))
             separarProdutosEvento(composicao_acabados) 
         elif radiobutton_variable.get() == 2:
-            print("SEMI ACABADOS")
             composicao_semiacabados = list(filter(lambda produto:produto['produtoAcabado'] == False, produtos))
             separarProdutosEvento(composicao_semiacabados)
 
@@ -396,12 +390,14 @@ def inserirTabelaControle():
         un = produto['UN']
         cod_produto = produto['CODPRODUTO']
         saldo = produto['somaQuantidade']
+        motivo = "sei la kk"
         if saldo >= 0:
             total = 'black'
         else:
             total = 'red'
         data = (id, descricao, un, cod_produto, saldo)
         tabelas.tbl_controle.insert(parent='', index=0, values=data, tags=total)
+        tabelas.tbl_motivo.insert(parent='', index=0, values=(id, descricao, motivo, recuperarHoraAtual()))
     tabelas.tbl_controle.tag_configure("red", foreground="red")
     
     global saprod_estoque
@@ -447,11 +443,16 @@ def janelaAttEstoque(_tbl, tp_controle, tp_att):
         att_saldo = Entry(janela_soma, textvariable=att_var, bd=4)
         att_saldo.grid(row=2, padx=(40, 0), pady=(0,20))
         
-        btn_add = Button(janela_soma, text=f"{titulo_botao}", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle, tp_att))
-        btn_add.grid(row=3, sticky='nsew', padx=(40, 0), pady=(0,20))
+        lbl_motivo_explicacao = Label(janela_soma, text="Por favor, escreva o motivo da atualização do estoque:")
+        lbl_motivo_explicacao.grid(row=3, padx=(40, 0))
+        just_var = ''
+        motivo = Entry(janela_soma, textvariable=just_var, bd=4)
+        motivo.grid(row=4, padx=(40, 0), pady=(0,20))
+        
+        btn_add = Button(janela_soma, text=f"{titulo_botao}", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle, tp_att, motivo.get()))
+        btn_add.grid(row=5, sticky='nsew', padx=(40, 0), pady=(0,20))
 
-
-def attSaldo(produto, att_saldo, tp_controle, tp_att):
+def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
     if tp_controle == 'acabados':
         novo_produto = {
             "pkProduto": produto[0],
@@ -460,13 +461,13 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att):
             "unidade": produto[2],
             "dataMov": recuperarHoraAtual(),
             "tipoMov": tp_att,
-            "motivo": ''
+            "motivo": motivo
         }
+        print(motivo)
         if tp_att == 'soma':
             db_ctrl_estoque.adicionarEstoque(novo_produto)
         else:
             novo_produto['saldo'] = int(novo_produto['saldo']) * -1
-            print(novo_produto)
             db_ctrl_estoque.adicionarEstoque(novo_produto)
         db_ctrl_estoque.getEstoqueCompleto()
     else:
@@ -477,8 +478,9 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att):
             "unidade": produto[3],
             "dataMov": recuperarHoraAtual(),
             "tipoMov": tp_att,
-            "motivo": ''
+            "motivo": motivo
         }
+        print(motivo)
         if tp_att == 'soma':
             db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         else:
@@ -527,7 +529,7 @@ def filtrarListaEstoque(event, tipo_tabela):
 
 #Tkinter
 root = Tk()
-root.title("Gerar pedidos de suprimento")
+root.title("| Gerar pedidos de suprimento |")
 
 root.geometry("1150x800")
 
@@ -535,7 +537,7 @@ notebook = ttk.Notebook(root)
 notebook.pack(fill=BOTH, expand=True)
 
 page1 = Frame(notebook)
-notebook.add(page1, text='Página 1')
+notebook.add(page1, text='| Relatório pedidos de suprimento |')
 
 mainFrame = Frame(page1)
 mainFrame.pack(fill=BOTH, expand=1)
@@ -646,7 +648,7 @@ btn_obter_data.grid(row=17, column=0, columnspan=2, padx=(80, 0), pady=(10, 30),
 ####################################################
 
 page2 = Frame(notebook)
-notebook.add(page2,text='Página 2')
+notebook.add(page2,text='| Controle estoque acabados |')
 
 saldo_var = ''
 input_saldo = Entry(page2, textvariable=saldo_var, bd=4)
@@ -669,7 +671,7 @@ btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 3
 ####################################################
 
 page3 = Frame(notebook)
-notebook.add(page3,text='Página 3')
+notebook.add(page3,text='| Controle estoque semi-acabados |')
 
 saldo_var_sa = ''
 input_saldo_sa = Entry(page3, textvariable=saldo_var_sa, bd=4)
@@ -687,13 +689,22 @@ btn_atualisar.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), s
 btn_acerto_estoque = Button(page3, text="Aplicar acerto de estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados', 'subtracao'))
 btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
+####################################################
+# PÁGINA 4
+####################################################
+page4 = Frame(notebook)
+notebook.add(page4, text='| Motivos de estoque |')
 
-tabelas.criarTabela(secondFrame)
-tabelas.tabelaControleEstoque(page2)
-tabelas.tabelaCtrlSemiacabados(page3)
-inserirTabelaControle()
-root.mainloop()
 
+# Certifique-se de que secondFrame, page2 e page3 estão definidos corretamente
+tabelas.criarTabela(secondFrame)  # Cria uma tabela no secondFrame
+tabelas.tabelaControleEstoque(page2)  # Adiciona tabela de controle de estoque na página 2 
+tabelas.tabelaCtrlSemiacabados(page3)  # Adiciona tabela de controle de semiacabados na página 3
+tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 3
+
+inserirTabelaControle() 
+
+root.mainloop()  # Inicia o loop principal do Tkinter
 # lb1 = Label(page2, text='I am page 2')
 # lb1.grid(pady=20)
 
