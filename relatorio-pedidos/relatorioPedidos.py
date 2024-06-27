@@ -14,11 +14,16 @@ import criacao_planilha
 import db_ctrl_estoque
 import controleEstoqueService
 
+# db_ctrl_estoque.excluirTabela('ctrl_estoque')
+# db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
 # controleEstoque = controleEstoqueService.EstoqueService()
 # controleEstoque.formatarProdutosControle()
-#db_ctrl_estoque.create_sqlite_database('controle_estoque.db')
 # db_ctrl_estoque.criar_tabela()
-# db_ctrl_estoque.criarTblControleSA()
+#db_ctrl_estoque.criarTblControleSA()
+# db_ctrl_estoque.add_produto()
+#db_ctrl_estoque.add_sa()
+# db_ctrl_estoque.getEstoqueCompleto()
+# db_ctrl_estoque.getEstoqueSA()
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
@@ -370,26 +375,40 @@ def gerarPlanilha():
 def inserirTabelaMotivos():
     motivos = controleEstoqueService.EstoqueService()
     motivosAcabados = motivos.p_controle
-    motivosSemiAcabados = motivos.sa_controle 
-     
+    motivosSemiAcabados = motivos.sa_controle
+    
+    # Limpa as tabelas antes de inserir novos itens
+    for item in tabelas.tbl_motivo_acabados.get_children():
+        tabelas.tbl_motivo_acabados.delete(item)
+    for item in tabelas.tbl_motivo_semi_acabados.get_children():
+        tabelas.tbl_motivo_semi_acabados.delete(item)
+    
+    # Inserir motivos acabados
     for x in motivosAcabados:
-        if(x['tipoMov'] == 'subtracao'):
+        if x['tipoMov'] == 'subtracao':
             id = x['pkProduto']
             descricao = x['descricao']
             motivo = x['motivo']
+            quemSolicitou = x['solicitante']
             subtracao = x['saldo']
-            data = (id, descricao, motivo, subtracao, recuperarHoraAtual())
-            tabelas.tbl_motivo.insert(parent='', index=0, values=data)
+            data = (id, descricao, motivo, quemSolicitou, subtracao, 
+                    datetime.strptime(recuperarHoraAtual(), "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+            
+            tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
             print(x)
 
+    # Inserir motivos semi-acabados
     for y in motivosSemiAcabados:
-        if(y['tipoMov'] == 'subtracao'):
+        if y['tipoMov'] == 'subtracao':
             id = y['idxProduto']
             descricao = y['descricao']
             motivo = y['motivo']
+            quemSolicitou = y['solicitante']
             subtracao = y['saldo']
-            data = (id, descricao, motivo, subtracao, recuperarHoraAtual())
-            tabelas.tbl_motivo.insert(parent='', index=0, values=data)
+            data = (id, descricao, motivo, quemSolicitou, subtracao, 
+                    datetime.strptime(recuperarHoraAtual(), "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+            
+            tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
             print(y)
      
 def inserirTabelaControle():
@@ -463,10 +482,16 @@ def janelaAttEstoque(_tbl, tp_controle, tp_att):
         motivo = Entry(janela_soma, textvariable=just_var, bd=4)
         motivo.grid(row=4, padx=(40, 0), pady=(0,20))
         
-        btn_add = Button(janela_soma, text=f"{titulo_botao}", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle, tp_att, motivo.get()))
-        btn_add.grid(row=5, sticky='nsew', padx=(40, 0), pady=(0,20))
+        lbl_motivo_explicacao = Label(janela_soma, text="Por favor, escreva o nome do solicitante:")
+        lbl_motivo_explicacao.grid(row=5, padx=(40, 0))
+        solicitante_var = ''
+        solicitante = Entry(janela_soma, textvariable=solicitante_var, bd=4)
+        solicitante.grid(row=6, padx=(40, 0), pady=(0,20))
+        
+        btn_add = Button(janela_soma, text=f"{titulo_botao}", bg='#C0C0C0', font=("Arial", 16), command=lambda: attSaldo(dados_prod, att_saldo.get(), tp_controle, tp_att, solicitante.get(), motivo.get()))
+        btn_add.grid(row=7, sticky='nsew', padx=(40, 0), pady=(0,20))
 
-def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
+def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
     if tp_controle == 'acabados':
         novo_produto = {
             "pkProduto": produto[0],
@@ -475,7 +500,8 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
             "unidade": produto[2],
             "dataMov": recuperarHoraAtual(),
             "tipoMov": tp_att,
-            "motivo": motivo
+            "motivo": motivo,
+            "solicitante": solicitante
         }
         if tp_att == 'soma':
             db_ctrl_estoque.adicionarEstoque(novo_produto)
@@ -491,7 +517,8 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo):
             "unidade": produto[3],
             "dataMov": recuperarHoraAtual(),
             "tipoMov": tp_att,
-            "motivo": motivo
+            "motivo": motivo,
+            "solicitante": solicitante
         }
         if tp_att == 'soma':
             db_ctrl_estoque.addEstoqueSA(adicao_saldo)
@@ -709,11 +736,11 @@ page4 = Frame(notebook)
 notebook.add(page4, text='| Motivos de estoque |')
 
 
-# Certifique-se de que secondFrame, page2 e page3 estão definidos corretamente
 tabelas.criarTabela(secondFrame)  # Cria uma tabela no secondFrame
 tabelas.tabelaControleEstoque(page2)  # Adiciona tabela de controle de estoque na página 2 
 tabelas.tabelaCtrlSemiacabados(page3)  # Adiciona tabela de controle de semiacabados na página 3
-tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 3
+tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 4
+tabelas.tabelaMotivoSA(page4)  # Adiciona tabela de motivo SA na página 4
 inserirTabelaControle() 
 inserirTabelaMotivos()
 root.mainloop()  # Inicia o loop principal do Tkinter
