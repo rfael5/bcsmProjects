@@ -216,14 +216,14 @@ def tabelaMotivo(frame):
     tbl_motivo_acabados.heading('Motivo', text='Motivo')
     tbl_motivo_acabados.heading('Saldo', text='Subtração')
     tbl_motivo_acabados.heading('Data e hora', text='Data e hora')
-    tbl_motivo_acabados.grid(row=10, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    tbl_motivo_acabados.grid(row=11, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
     
     tbl_motivo_acabados.column('ID', width=100, anchor=CENTER)
     tbl_motivo_acabados.column('Produto', width=100, anchor=CENTER)
-    tbl_motivo_acabados.column('Solicitante', width=100, anchor=CENTER)
-    tbl_motivo_acabados.column('Motivo', width=300, anchor=CENTER)
-    tbl_motivo_acabados.column('Saldo', width=100, anchor=CENTER)
-    tbl_motivo_acabados.column('Data e hora', width=100, anchor=CENTER)
+    tbl_motivo_acabados.column('Solicitante', width=250, anchor=CENTER)
+    tbl_motivo_acabados.column('Motivo', width=250, anchor=CENTER)
+    tbl_motivo_acabados.column('Saldo', width=200, anchor=CENTER)
+    tbl_motivo_acabados.column('Data e hora', width=150, anchor=CENTER)
     
     tbl_motivo_acabados.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_motivo_acabados))
     
@@ -231,7 +231,7 @@ def tabelaMotivo(frame):
 def tabelaMotivoSA(frame):
     global tbl_motivo_semi_acabados
     label_semi_acabados = Label(frame, text="Tabela de Motivos - Semi Acabados", font=('Arial', 12, 'bold'))
-    label_semi_acabados.grid(row=11, columnspan=2, padx=(80, 0), pady=(0, 10))
+    label_semi_acabados.grid(row=12, columnspan=2, padx=(80, 0), pady=(0, 10))
     tbl_motivo_semi_acabados = ttk.Treeview(frame, columns=('ID', 'Produto', 'Solicitante', 'Motivo', 'Saldo', 'Data e hora'), show='headings')
     tbl_motivo_semi_acabados.heading('ID', text='ID')
     tbl_motivo_semi_acabados.heading('Produto', text='Produto')
@@ -239,14 +239,14 @@ def tabelaMotivoSA(frame):
     tbl_motivo_semi_acabados.heading('Motivo', text='Motivo')
     tbl_motivo_semi_acabados.heading('Saldo', text='Subtração')
     tbl_motivo_semi_acabados.heading('Data e hora', text='Data e hora')
-    tbl_motivo_semi_acabados.grid(row=12, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
+    tbl_motivo_semi_acabados.grid(row=14, columnspan=2, padx=(80, 0), pady=10, sticky="nsew")
     
     tbl_motivo_semi_acabados.column('ID', width=100, anchor=CENTER)
     tbl_motivo_semi_acabados.column('Produto', width=100, anchor=CENTER)
-    tbl_motivo_semi_acabados.column('Solicitante', width=100, anchor=CENTER)
-    tbl_motivo_semi_acabados.column('Motivo', width=300, anchor=CENTER)
-    tbl_motivo_semi_acabados.column('Saldo', width=100, anchor=CENTER)
-    tbl_motivo_semi_acabados.column('Data e hora', width=100, anchor=CENTER)
+    tbl_motivo_semi_acabados.column('Solicitante', width=250, anchor=CENTER)
+    tbl_motivo_semi_acabados.column('Motivo', width=250, anchor=CENTER)
+    tbl_motivo_semi_acabados.column('Saldo', width=200, anchor=CENTER)
+    tbl_motivo_semi_acabados.column('Data e hora', width=150, anchor=CENTER)
     
     tbl_motivo_semi_acabados.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_motivo_semi_acabados))
 

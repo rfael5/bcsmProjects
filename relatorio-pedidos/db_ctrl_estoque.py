@@ -148,7 +148,6 @@ def getEstoqueCompleto():
             cursor.execute('SELECT * FROM ctrl_estoque')
             rows = cursor.fetchall()
             produtos = [dict(row) for row in rows]
-            print(produtos)
             return produtos
     except sqlite3.Error as e:
         print(e)

@@ -373,15 +373,18 @@ def gerarPlanilha():
 
 
 def inserirTabelaMotivos():
+    global motivosAcabados
+    global motivosSemiAcabados
     motivos = controleEstoqueService.EstoqueService()
     motivosAcabados = motivos.p_controle
     motivosSemiAcabados = motivos.sa_controle
     
-    # Limpa as tabelas antes de inserir novos itens
-    for item in tabelas.tbl_motivo_acabados.get_children():
-        tabelas.tbl_motivo_acabados.delete(item)
-    for item in tabelas.tbl_motivo_semi_acabados.get_children():
-        tabelas.tbl_motivo_semi_acabados.delete(item)
+    motivosAcabados.sort(key=lambda x: x['dataMov'], reverse=False)
+    motivosSemiAcabados.sort(key=lambda x: x['dataMov'], reverse=False)
+    
+    # Limpa as tabelas antes de inserir novos itens    
+    tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
+    tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())
     
     # Inserir motivos acabados
     for x in motivosAcabados:
@@ -391,11 +394,9 @@ def inserirTabelaMotivos():
             motivo = x['motivo']
             quemSolicitou = x['solicitante']
             subtracao = x['saldo']
-            data = (id, descricao, motivo, quemSolicitou, subtracao, 
-                    datetime.strptime(recuperarHoraAtual(), "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-            
+            data_formatada = datetime.strptime(x['dataMov'], "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S")
+            data = (id, descricao, motivo, quemSolicitou, subtracao, data_formatada)
             tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
-            print(x)
 
     # Inserir motivos semi-acabados
     for y in motivosSemiAcabados:
@@ -405,11 +406,9 @@ def inserirTabelaMotivos():
             motivo = y['motivo']
             quemSolicitou = y['solicitante']
             subtracao = y['saldo']
-            data = (id, descricao, motivo, quemSolicitou, subtracao, 
-                    datetime.strptime(recuperarHoraAtual(), "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-            
+            data_formatada = datetime.strptime(y['dataMov'], "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S")
+            data = (id, descricao, motivo, quemSolicitou, subtracao, data_formatada)
             tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
-            print(y)
      
 def inserirTabelaControle():
     global prod_estoque
@@ -506,8 +505,14 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
         if tp_att == 'soma':
             db_ctrl_estoque.adicionarEstoque(novo_produto)
         else:
-            novo_produto['saldo'] = int(novo_produto['saldo']) * -1
-            db_ctrl_estoque.adicionarEstoque(novo_produto)
+            if not motivo or not solicitante:
+                messagebox.showinfo(
+                    'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
+                    )
+                return
+            else:
+                novo_produto['saldo'] = int(novo_produto['saldo']) * -1
+                db_ctrl_estoque.adicionarEstoque(novo_produto)
         db_ctrl_estoque.getEstoqueCompleto()
     else:
         adicao_saldo = {
@@ -523,19 +528,25 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
         if tp_att == 'soma':
             db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         else:
-            adicao_saldo['saldo'] = int(adicao_saldo['saldo']) * -1
-            db_ctrl_estoque.addEstoqueSA(adicao_saldo)
+            if not motivo or not solicitante:
+                messagebox.showinfo(
+                    'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
+                    )
+                return
+            else:
+                adicao_saldo['saldo'] = int(adicao_saldo['saldo']) * -1
+                db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         db_ctrl_estoque.getEstoqueSA
     
     inserirTabelaControle()
     inserirTabelaMotivos()
     janela_soma.destroy()
 
-def filtrarListaEstoque(event, tipo_tabela):
+def filtrarListas(event, tipo_tabela):
     if tipo_tabela == 'acabados':
         text = input_saldo.get()
         _estoque = prod_estoque
-        prod_filtrados = list(filter(lambda produto:text.lower() in produto['DESCRICAO'].lower(), _estoque))
+        prod_filtrados = list(filter(lambda produto: text.lower() in produto['DESCRICAO'].lower(), _estoque))
         tabelas.tbl_controle.delete(*tabelas.tbl_controle.get_children())
         for produto in prod_filtrados:
             id = produto['PK_PRODUTO']
@@ -545,10 +556,11 @@ def filtrarListaEstoque(event, tipo_tabela):
             saldo = produto['somaQuantidade']
             data = (id, descricao, un, cod_produto, saldo)
             tabelas.tbl_controle.insert(parent='', index=0, values=data)
-    else:
+            
+    elif tipo_tabela == 'semi-acabados':
         text = input_saldo_sa.get()
         _estoquesa = saprod_estoque
-        prodsa_filtrados = list(filter(lambda prodsa:text.lower() in prodsa['DESCRICAO'].lower(), _estoquesa))
+        prodsa_filtrados = list(filter(lambda prodsa: text.lower() in prodsa['DESCRICAO'].lower(), _estoquesa))
         tabelas.tbl_ctrl_semi.delete(*tabelas.tbl_ctrl_semi.get_children())
         for semiacabado in prodsa_filtrados:
             id = semiacabado['IDX_PRODUTO']
@@ -558,14 +570,41 @@ def filtrarListaEstoque(event, tipo_tabela):
             data_sa = (id, produto, saldo, un)
             tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa)
             
-    
-
-
-# btn_somar_estoque = Button(page2, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16))
-# btn_somar_estoque.grid(row=5, column=0)
+    elif tipo_tabela == 'motivosAcabados':
+        text = input_motivo.get() 
+        _motivos = motivosAcabados 
+        motivos_filtrados = list(filter(lambda motivo: text.lower() in motivo['descricao'].lower(), _motivos))
+        tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
+        for motivoA in motivos_filtrados:
+            if(motivoA['tipoMov'] == "subtracao"):
+                id = motivoA['pkProduto']
+                descricao = motivoA['descricao']
+                motivo = motivoA['motivo']
+                quemSolicitou = motivoA['solicitante']
+                subtracao = motivoA['saldo']
+                data = motivoA['dataMov']
+                data = (id, descricao, motivo, quemSolicitou, subtracao, 
+                            datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+                tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
+            
+    elif tipo_tabela == 'motivosSemiAcabados':
+        text = input_motivoSA.get()  
+        _semiacabados = motivosSemiAcabados 
+        semiacabados_filtrados = list(filter(lambda motivoSA: text.lower() in motivoSA['descricao'].lower(), _semiacabados))
+        tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())  
+        for motivoSA in semiacabados_filtrados: 
+            if(motivoSA['tipoMov'] == "subtracao"):
+                id = motivoSA['idxProduto']
+                descricao = motivoSA['descricao']
+                motivo = motivoSA['motivo']
+                quemSolicitou = motivoSA['solicitante']
+                subtracao = motivoSA['saldo']
+                data = motivoSA['dataMov']
+                data = (id, descricao, motivo, quemSolicitou, subtracao, 
+                        datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+                tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
 
 #O código abaixo cria a interface que usamos para testar nosso script.
-
 
 #Tkinter
 root = Tk()
@@ -693,7 +732,7 @@ notebook.add(page2,text='| Controle estoque acabados |')
 saldo_var = ''
 input_saldo = Entry(page2, textvariable=saldo_var, bd=4)
 input_saldo.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
-input_saldo.bind("<KeyRelease>", lambda event: filtrarListaEstoque(event, 'acabados'))
+input_saldo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'acabados'))
 
 #Row 4 - Tabela controle estoque
 
@@ -716,7 +755,7 @@ notebook.add(page3,text='| Controle estoque semi-acabados |')
 saldo_var_sa = ''
 input_saldo_sa = Entry(page3, textvariable=saldo_var_sa, bd=4)
 input_saldo_sa.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
-input_saldo_sa.bind("<KeyRelease>", lambda event: filtrarListaEstoque(event, 'semiacabados'))
+input_saldo_sa.bind("<KeyRelease>", lambda event: filtrarListas(event, 'semiacabados'))
 
 #Row 4 - Tabela controle semi-acabados
 
@@ -735,6 +774,14 @@ btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 3
 page4 = Frame(notebook)
 notebook.add(page4, text='| Motivos de estoque |')
 
+input_motivo = Entry(page4, textvariable=saldo_var, bd=4)
+input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_motivo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosAcabados'))
+
+input_motivoSA = Entry(page4, textvariable=saldo_var, bd=4)
+input_motivoSA.grid(row=13, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_motivoSA.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosSemiAcabados'))
+
 
 tabelas.criarTabela(secondFrame)  # Cria uma tabela no secondFrame
 tabelas.tabelaControleEstoque(page2)  # Adiciona tabela de controle de estoque na página 2 
@@ -743,40 +790,7 @@ tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 4
 tabelas.tabelaMotivoSA(page4)  # Adiciona tabela de motivo SA na página 4
 inserirTabelaControle() 
 inserirTabelaMotivos()
-root.mainloop()  # Inicia o loop principal do Tkinter
-# lb1 = Label(page2, text='I am page 2')
-# lb1.grid(pady=20)
-
-# hora_ultima_checagem = Label(page2, text='', bg='#C0C0C0', font=("Arial", 16))
-# hora_ultima_checagem.grid(row=0, column=0)
-
-# mensagem_banco = Label(page2, text='', font=("Arial", 16))
-# mensagem_banco.grid(row=1, column=0)
-
-# dt_inicio_semana = Label(page2, text="De:", font=("Arial", 14))
-# dt_inicio_semana.grid(row=2, padx=(0, 190), column=0, sticky="e")
-
-# dt_inicio_semana = DateEntry(page2, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-# dt_inicio_semana.grid(row=3, column=0, padx=(150, 0), pady=5, sticky="e")
-
-# dt_fim_semana = Label(page2, text="Até:", font=("Arial", 14))
-# dt_fim_semana.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
-
-# dt_fim_semana = DateEntry(page2, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-# dt_fim_semana.grid(row=3, column=1, padx=(50, 0), pady=5, sticky="w")
-
-# btn_pedidos_semana = Button(page2, text="Ver pedidos meio semana", bg='#C0C0C0', font=("Arial", 16), command= lambda: inserirTabelaTeste('btn'))
-# btn_pedidos_semana.grid(row=4)
-# #verTodosEventos
-# btn_mostrar_eventos = Button(page2, text="Ver todos os eventos", bg='#C0C0C0', font=("Arial", 16), command= lambda:verTodosEventos(ajustes_meio_semana, tabelas.tabelaSemana))
-# btn_mostrar_eventos.grid(row=7)
-
-# #tabelas.criarTabelaMeioSemana(page2)
-# tabelas.criarTabela(secondFrame)
-
-# #consultarAttBanco()
-
-# root.mainloop()
+root.mainloop()  
 
 
 
