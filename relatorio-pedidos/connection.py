@@ -3,24 +3,24 @@ import pandas as pd
 import json
 
 #Conexão banco de testes
-conexao = (
-    "mssql+pyodbc:///?odbc_connect=" + 
-    "DRIVER={ODBC Driver 17 for SQL Server};" +
-    "SERVER=192.168.1.137;" +
-    "DATABASE=SOUTTOMAYOR;" +
-    "UID=Sa;" +
-    "PWD=P@ssw0rd2023"
-)
-
-#Conexão no banco principal
 # conexao = (
 #     "mssql+pyodbc:///?odbc_connect=" + 
 #     "DRIVER={ODBC Driver 17 for SQL Server};" +
-#     "SERVER=192.168.1.43;" +
+#     "SERVER=192.168.1.137;" +
 #     "DATABASE=SOUTTOMAYOR;" +
 #     "UID=Sa;" +
-#     "PWD=P@ssw0rd2023@#$"
+#     "PWD=P@ssw0rd2023"
 # )
+
+#Conexão no banco principal
+conexao = (
+    "mssql+pyodbc:///?odbc_connect=" + 
+    "DRIVER={ODBC Driver 17 for SQL Server};" +
+    "SERVER=192.168.1.43;" +
+    "DATABASE=SOUTTOMAYOR;" +
+    "UID=Sa;" +
+    "PWD=P@ssw0rd2023@#$"
+)
 
 engine = create_engine(conexao, pool_pre_ping=True)
 
@@ -262,10 +262,10 @@ def getProdutosControleEstoque():
     
     query = '''
         SELECT PK_PRODUTO, P.DESCRICAO, P.UN, P.CODPRODUTO, SUM(M.L_QUANTIDADE) AS somaQuantidade FROM TPAPRODUTO AS P 
-            LEFT JOIN TPAMOVTOPED AS M ON PK_PRODUTO = IDX_PRODUTO AND M.DATA >= '20240610'
-        WHERE P.ESTOQUE = 'S' AND P.IDX_NEGOCIO = 'Produtos Acabados' AND M.SITUACAOOP = 'U'
+            LEFT JOIN TPAMOVTOPED AS M ON PK_PRODUTO = IDX_PRODUTO AND M.DATA >= '20240610' AND M.SITUACAOOP = 'U'
+        WHERE P.ESTOQUE = 'S' AND P.IDX_NEGOCIO = 'Produtos Acabados'
         GROUP BY PK_PRODUTO, P.DESCRICAO, P.UN, P.CODPRODUTO
-        ORDER BY P.DESCRICAO DESC  
+        ORDER BY P.DESCRICAO DESC 
     '''
     
     res = receberDados(query)

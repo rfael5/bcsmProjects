@@ -18,12 +18,12 @@ import controleEstoqueService
 # db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
 # controleEstoque = controleEstoqueService.EstoqueService()
 # controleEstoque.formatarProdutosControle()
-# db_ctrl_estoque.criar_tabela()
-#db_ctrl_estoque.criarTblControleSA()
-# db_ctrl_estoque.add_produto()
-#db_ctrl_estoque.add_sa()
-# db_ctrl_estoque.getEstoqueCompleto()
-# db_ctrl_estoque.getEstoqueSA()
+db_ctrl_estoque.criar_tabela()
+db_ctrl_estoque.criarTblControleSA()
+db_ctrl_estoque.add_produto()
+db_ctrl_estoque.add_sa()
+db_ctrl_estoque.getEstoqueCompleto()
+db_ctrl_estoque.getEstoqueSA()
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
@@ -511,7 +511,7 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
                     )
                 return
             else:
-                novo_produto['saldo'] = int(novo_produto['saldo']) * -1
+                novo_produto['saldo'] = float(novo_produto['saldo']) * -1
                 db_ctrl_estoque.adicionarEstoque(novo_produto)
         db_ctrl_estoque.getEstoqueCompleto()
     else:
@@ -534,7 +534,7 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
                     )
                 return
             else:
-                adicao_saldo['saldo'] = int(adicao_saldo['saldo']) * -1
+                adicao_saldo['saldo'] = float(adicao_saldo['saldo']) * -1
                 db_ctrl_estoque.addEstoqueSA(adicao_saldo)
         db_ctrl_estoque.getEstoqueSA
     

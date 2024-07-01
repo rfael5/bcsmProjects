@@ -7,7 +7,6 @@ def create_sqlite_database(filename):
     conn = None
     try:
         conn = sqlite3.connect(filename)
-        print(sqlite3.sqlite_version)
         # criar_tabela()
         add_produto()
         add_sa()
@@ -108,9 +107,7 @@ def add_produto():
         with sqlite3.connect(caminho_bd) as conn:
             #produto = ('Coxinha de Frango com Catupiry', 3500, '2024-06-10')
             lst_produtos = [
-                (3851, 'AAAAAAAAAAATESTE', 35000, 'UN', '25/06/2024', 'soma', '', ''),
-                (2995, 'AAAATEST2', 34000, 'UN', '25/06/2024', 'soma', '', ''),
-                (315, 'TESTE3', 3000, 'UN', '25/06/2024', 'soma', '', '')
+                (3, 'produto teste', 35000, 'UN', '25/06/2024', 'soma', '', '')
             ]
             cursor = conn.cursor()
             for p in lst_produtos:
@@ -127,9 +124,7 @@ def add_sa():
     try:
         with sqlite3.connect(caminho_bd) as conn:
             lst_produtos = [
-                (3851, 'AAAAAAAAAAATESTE', 35000, 'UN', '25/06/2024', 'soma', '', ''),
-                (2995, 'AAAATEST2', 34000, 'UN', '25/06/2024', 'soma', '', ''),
-                (315, 'TESTE3', 3000, 'UN', '25/06/2024', 'soma', '', '')
+                (2, 'Produto SA teste', 35000, 'UN', '25/06/2024', 'soma', '', ''),
             ]
             cursor = conn.cursor()
             for p in lst_produtos:
@@ -160,7 +155,6 @@ def getEstoqueSA():
             cursor.execute('SELECT * FROM ctrl_semi_acabados')
             rows = cursor.fetchall()
             produtos = [dict(row) for row in rows]
-            print(produtos)
             return produtos
     except sqlite3.Error as e:
         print(e)
