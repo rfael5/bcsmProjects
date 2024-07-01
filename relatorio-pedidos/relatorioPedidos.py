@@ -14,8 +14,8 @@ import criacao_planilha
 import db_ctrl_estoque
 import controleEstoqueService
 
-# db_ctrl_estoque.excluirTabela('ctrl_estoque')
-# db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
+db_ctrl_estoque.excluirTabela('ctrl_estoque')
+db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
 # controleEstoque = controleEstoqueService.EstoqueService()
 # controleEstoque.formatarProdutosControle()
 db_ctrl_estoque.criar_tabela()
@@ -502,18 +502,26 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
             "motivo": motivo,
             "solicitante": solicitante
         }
-        if tp_att == 'soma':
-            db_ctrl_estoque.adicionarEstoque(novo_produto)
-        else:
-            if not motivo or not solicitante:
-                messagebox.showinfo(
-                    'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
-                    )
-                return
-            else:
-                novo_produto['saldo'] = float(novo_produto['saldo']) * -1
+        try:
+            if tp_att == 'soma':
+                novo_produto['saldo'] = abs(float(novo_produto['saldo']))
                 db_ctrl_estoque.adicionarEstoque(novo_produto)
-        db_ctrl_estoque.getEstoqueCompleto()
+            else:
+                if not motivo or not solicitante:
+                    messagebox.showinfo(
+                        'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
+                        )
+                    return
+                else:
+                    novo_produto['saldo'] = -abs(float(novo_produto['saldo']))
+                    db_ctrl_estoque.adicionarEstoque(novo_produto)
+            db_ctrl_estoque.getEstoqueCompleto()
+            
+        except Exception as e:
+            messagebox.showerror(
+                'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos.: {str(e)}'
+            )
+            
     else:
         adicao_saldo = {
             "idxProduto":produto[0],
@@ -525,18 +533,25 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
             "motivo": motivo,
             "solicitante": solicitante
         }
-        if tp_att == 'soma':
-            db_ctrl_estoque.addEstoqueSA(adicao_saldo)
-        else:
-            if not motivo or not solicitante:
-                messagebox.showinfo(
-                    'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
-                    )
-                return
-            else:
-                adicao_saldo['saldo'] = float(adicao_saldo['saldo']) * -1
+        try:
+            if tp_att == 'soma':
+                adicao_saldo['saldo'] = abs(float(adicao_saldo['saldo']))
                 db_ctrl_estoque.addEstoqueSA(adicao_saldo)
-        db_ctrl_estoque.getEstoqueSA
+            else:
+                if not motivo or not solicitante:
+                    messagebox.showinfo(
+                            'Nenhum motivo ou solicitante', 'Por favor, verifique se os campos motivos e solicitante estão preenchidos corretamente.'
+                            )
+                    return
+                else:
+                    adicao_saldo['saldo'] = -abs(float(adicao_saldo['saldo']))
+                    db_ctrl_estoque.addEstoqueSA(adicao_saldo)
+            db_ctrl_estoque.getEstoqueSA
+            
+        except Exception as e:
+            messagebox.showerror(
+            'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos.: {str(e)}'
+            )
     
     inserirTabelaControle()
     inserirTabelaMotivos()
