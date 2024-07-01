@@ -730,20 +730,23 @@ page2 = Frame(notebook)
 notebook.add(page2,text='| Controle estoque acabados |')
 
 saldo_var = ''
+label_pesquisa_sa = Label(page2, text="Pesquise o produto acabado:", font=('Arial', 12, 'bold'))
+label_pesquisa_sa.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 0), sticky='nsew')
+
 input_saldo = Entry(page2, textvariable=saldo_var, bd=4)
-input_saldo.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_saldo.grid(row=2, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 input_saldo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'acabados'))
 
 #Row 4 - Tabela controle estoque
 
 btn_somar_estoque = Button(page2, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_controle, 'acabados', 'soma'))
-btn_somar_estoque.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_somar_estoque.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_atualisar = Button(page2, text="Atualizar saldo", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaControle)
-btn_atualisar.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_atualisar.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_acerto_estoque = Button(page2, text="Aplicar acerto de estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_controle, 'acabados', 'subtracao'))
-btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_acerto_estoque.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 ####################################################
 #PÁGINA 3
@@ -753,20 +756,23 @@ page3 = Frame(notebook)
 notebook.add(page3,text='| Controle estoque semi-acabados |')
 
 saldo_var_sa = ''
+label_pesquisa_sa = Label(page3, text="Pesquise o produto Semi-acabado:", font=('Arial', 12, 'bold'))
+label_pesquisa_sa.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 0), sticky='nsew')
+
 input_saldo_sa = Entry(page3, textvariable=saldo_var_sa, bd=4)
-input_saldo_sa.grid(row=1, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_saldo_sa.grid(row=2, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 input_saldo_sa.bind("<KeyRelease>", lambda event: filtrarListas(event, 'semiacabados'))
 
 #Row 4 - Tabela controle semi-acabados
 
 btn_somar_estoque = Button(page3, text="Adicionar estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados', 'soma'))
-btn_somar_estoque.grid(row=5, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_somar_estoque.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_atualisar = Button(page3, text="Atualizar saldo", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaControle)
-btn_atualisar.grid(row=6, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_atualisar.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 btn_acerto_estoque = Button(page3, text="Aplicar acerto de estoque", bg='#C0C0C0', font=("Arial", 16), command=lambda: janelaAttEstoque(tabelas.tbl_ctrl_semi, 'semi_acabados', 'subtracao'))
-btn_acerto_estoque.grid(row=7, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+btn_acerto_estoque.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 
 ####################################################
 # PÁGINA 4
@@ -779,7 +785,7 @@ input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), s
 input_motivo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosAcabados'))
 
 input_motivoSA = Entry(page4, textvariable=saldo_var, bd=4)
-input_motivoSA.grid(row=13, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_motivoSA.grid(row=15, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
 input_motivoSA.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosSemiAcabados'))
 
 
