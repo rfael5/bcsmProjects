@@ -519,8 +519,9 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
             
         except Exception as e:
             messagebox.showerror(
-                'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos.: {str(e)}'
+                'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos. {str(e)}'  
             )
+            return
             
     else:
         adicao_saldo = {
@@ -550,8 +551,9 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
             
         except Exception as e:
             messagebox.showerror(
-            'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos.: {str(e)}'
+            'Erro', f'Ocorreu um erro ao tentar inserir, verifique se os valores estão corretos. {str(e)}'
             )
+            return
     
     inserirTabelaControle()
     inserirTabelaMotivos()
