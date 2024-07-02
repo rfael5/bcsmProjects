@@ -22,7 +22,10 @@ class EstoqueService:
         
         df_semiacabados = DataFrame(self.semiacabados_tpa)
         df_semiacabados['totalProducao'] = df_semiacabados.apply(self.calcularSaldoSemiacabados, axis=1)
+        print(df_semiacabados)
         df_semiacabados = df_semiacabados.apply(self.calcularSaldoSA, controle=sa_controle_json, axis=1)
+        print('#################################################################')
+        print(df_semiacabados)
         _semiacabadosjson = json.loads(df_semiacabados.to_json(orient='records'))
         self.ctrl_semiacabados = _semiacabadosjson
         
@@ -50,7 +53,7 @@ class EstoqueService:
     
     def calcularSaldoSA(self, row, controle):
         row['totalProducao'] = row['totalProducao'] * -1
-        if row['UN'] == 'GR':
+        if 'GR' in row['UN']:
             row['totalProducao'] = row['totalProducao'] / 1000
             row['UN'] = 'KG'
         for prod in controle:

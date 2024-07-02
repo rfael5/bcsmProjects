@@ -14,16 +14,16 @@ import criacao_planilha
 import db_ctrl_estoque
 import controleEstoqueService
 
-db_ctrl_estoque.excluirTabela('ctrl_estoque')
-db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
+# db_ctrl_estoque.excluirTabela('ctrl_estoque')
+# db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
 # controleEstoque = controleEstoqueService.EstoqueService()
 # controleEstoque.formatarProdutosControle()
-db_ctrl_estoque.criar_tabela()
-db_ctrl_estoque.criarTblControleSA()
-db_ctrl_estoque.add_produto()
-db_ctrl_estoque.add_sa()
-db_ctrl_estoque.getEstoqueCompleto()
-db_ctrl_estoque.getEstoqueSA()
+# db_ctrl_estoque.criar_tabela()
+# db_ctrl_estoque.criarTblControleSA()
+# db_ctrl_estoque.add_produto()
+# db_ctrl_estoque.add_sa()
+# db_ctrl_estoque.getEstoqueCompleto()
+# db_ctrl_estoque.getEstoqueSA()
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
@@ -587,39 +587,39 @@ def filtrarListas(event, tipo_tabela):
             data_sa = (id, produto, saldo, un)
             tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa)
             
-    elif tipo_tabela == 'motivosAcabados':
-        text = input_motivo.get() 
-        _motivos = motivosAcabados 
-        motivos_filtrados = list(filter(lambda motivo: text.lower() in motivo['descricao'].lower(), _motivos))
-        tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
-        for motivoA in motivos_filtrados:
-            if(motivoA['tipoMov'] == "subtracao"):
-                id = motivoA['pkProduto']
-                descricao = motivoA['descricao']
-                motivo = motivoA['motivo']
-                quemSolicitou = motivoA['solicitante']
-                subtracao = motivoA['saldo']
-                data = motivoA['dataMov']
-                data = (id, descricao, motivo, quemSolicitou, subtracao, 
-                            datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-                tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
+    # elif tipo_tabela == 'motivosAcabados':
+    #     text = input_motivo.get() 
+    #     _motivos = motivosAcabados 
+    #     motivos_filtrados = list(filter(lambda motivo: text.lower() in motivo['descricao'].lower(), _motivos))
+    #     tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
+    #     for motivoA in motivos_filtrados:
+    #         if(motivoA['tipoMov'] == "subtracao"):
+    #             id = motivoA['pkProduto']
+    #             descricao = motivoA['descricao']
+    #             motivo = motivoA['motivo']
+    #             quemSolicitou = motivoA['solicitante']
+    #             subtracao = motivoA['saldo']
+    #             data = motivoA['dataMov']
+    #             data = (id, descricao, motivo, quemSolicitou, subtracao, 
+    #                         datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+    #             tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
             
-    elif tipo_tabela == 'motivosSemiAcabados':
-        text = input_motivoSA.get()  
-        _semiacabados = motivosSemiAcabados 
-        semiacabados_filtrados = list(filter(lambda motivoSA: text.lower() in motivoSA['descricao'].lower(), _semiacabados))
-        tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())  
-        for motivoSA in semiacabados_filtrados: 
-            if(motivoSA['tipoMov'] == "subtracao"):
-                id = motivoSA['idxProduto']
-                descricao = motivoSA['descricao']
-                motivo = motivoSA['motivo']
-                quemSolicitou = motivoSA['solicitante']
-                subtracao = motivoSA['saldo']
-                data = motivoSA['dataMov']
-                data = (id, descricao, motivo, quemSolicitou, subtracao, 
-                        datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-                tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
+    # elif tipo_tabela == 'motivosSemiAcabados':
+    #     text = input_motivoSA.get()  
+    #     _semiacabados = motivosSemiAcabados 
+    #     semiacabados_filtrados = list(filter(lambda motivoSA: text.lower() in motivoSA['descricao'].lower(), _semiacabados))
+    #     tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())  
+    #     for motivoSA in semiacabados_filtrados: 
+    #         if(motivoSA['tipoMov'] == "subtracao"):
+    #             id = motivoSA['idxProduto']
+    #             descricao = motivoSA['descricao']
+    #             motivo = motivoSA['motivo']
+    #             quemSolicitou = motivoSA['solicitante']
+    #             subtracao = motivoSA['saldo']
+    #             data = motivoSA['dataMov']
+    #             data = (id, descricao, motivo, quemSolicitou, subtracao, 
+    #                     datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
+    #             tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
 
 #O código abaixo cria a interface que usamos para testar nosso script.
 
@@ -797,13 +797,25 @@ btn_acerto_estoque.grid(row=8, column=0, columnspan=2, padx=(80, 0), pady=(10, 3
 page4 = Frame(notebook)
 notebook.add(page4, text='| Motivos de estoque |')
 
-input_motivo = Entry(page4, textvariable=saldo_var, bd=4)
-input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
-input_motivo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosAcabados'))
+lbl_dtInicioMotivos = Label(page4, text="De:", font=("Arial", 14))
+lbl_dtInicioMotivos.grid(row=1, padx=(0, 190), column=0, sticky="e")
 
-input_motivoSA = Entry(page4, textvariable=saldo_var, bd=4)
-input_motivoSA.grid(row=15, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
-input_motivoSA.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosSemiAcabados'))
+dtInicioMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicioMotivos.grid(row=2, column=0, padx=(150, 0), pady=5, sticky="e")
+
+lbl_dtFimMotivos = Label(page4, text="Até:", font=("Arial", 14))
+lbl_dtFimMotivos.grid(row=1, column=1, padx=(50, 0), pady=5, sticky="w")
+
+dtFimMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFimMotivos.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
+
+# input_motivo = Entry(page4, textvariable=saldo_var, bd=4)
+# input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+# input_motivo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosAcabados'))
+
+# input_motivoSA = Entry(page4, textvariable=saldo_var, bd=4)
+# input_motivoSA.grid(row=15, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+# input_motivoSA.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosSemiAcabados'))
 
 
 tabelas.criarTabela(secondFrame)  # Cria uma tabela no secondFrame
