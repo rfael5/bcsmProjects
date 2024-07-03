@@ -158,7 +158,35 @@ def getEstoqueSA():
             return produtos
     except sqlite3.Error as e:
         print(e)
-
+        
+        
+        
+def getEstoqueDT(dataInicio, dataFim):
+    try:
+        with sqlite3.connect(caminho_bd) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            query = 'SELECT * FROM ctrl_estoque WHERE dataMov BETWEEN ? AND ?'
+            cursor.execute(query, (dataInicio, dataFim))
+            rows = cursor.fetchall()
+            produtos = [dict(row) for row in rows]
+            return produtos
+    except sqlite3.Error as e:
+        print(e)
+        
+def getEstoqueDT_SA(dataInicio, dataFim):
+    try:
+        with sqlite3.connect(caminho_bd) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            query = 'SELECT * FROM ctrl_semi_acabados WHERE dataMov BETWEEN ? AND ?'
+            cursor.execute(query, (dataInicio, dataFim))
+            rows = cursor.fetchall()
+            produtos = [dict(row) for row in rows]
+            return produtos
+    except sqlite3.Error as e:
+        print(e)
+        
 def buscarProdutoId(produto_id):
     try:
         with sqlite3.connect(caminho_bd) as conn:

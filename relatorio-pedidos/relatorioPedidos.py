@@ -16,8 +16,8 @@ import controleEstoqueService
 
 # db_ctrl_estoque.excluirTabela('ctrl_estoque')
 # db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
-# controleEstoque = controleEstoqueService.EstoqueService()
-# controleEstoque.formatarProdutosControle()
+# # controleEstoque = controleEstoqueService.EstoqueService()
+# # controleEstoque.formatarProdutosControle()
 # db_ctrl_estoque.criar_tabela()
 # db_ctrl_estoque.criarTblControleSA()
 # db_ctrl_estoque.add_produto()
@@ -105,6 +105,23 @@ def setarData(tipo_requisicao):
         tabelas.criarTabela(secondFrame)
         return None
 
+def setarDataMotivo(tipo):
+    dataInicioStr = dtInicioMotivos.get()
+    dataFimStr = dtFimMotivos.get()
+
+    # Convertendo as strings para objetos datetime
+    formato = '%d/%m/%Y'
+    dataInicio = datetime.strptime(dataInicioStr, formato)
+    dataFim = datetime.strptime(dataFimStr, formato)
+    if(dataInicio < dataFim):
+        if(tipo == 'acabados'):
+            estoqueCompleto = db_ctrl_estoque.getEstoqueDT(dataInicio, dataFim)
+            return estoqueCompleto
+        else:
+            estoqueCompletoSA = db_ctrl_estoque.getEstoqueDT_SA(dataInicio, dataFim)
+            return estoqueCompletoSA
+    else:
+        return None
 
 #Mesmo fluxo da função acima setarData(), porém para os pedidos feitos
 #depois que a lista ja foi gerada para serem entregues naquela mesma semana.
@@ -379,37 +396,51 @@ def inserirTabelaMotivos():
     motivosAcabados = motivos.p_controle
     motivosSemiAcabados = motivos.sa_controle
     
-    motivosAcabados.sort(key=lambda x: x['dataMov'], reverse=False)
-    motivosSemiAcabados.sort(key=lambda x: x['dataMov'], reverse=False)
+    data = setarDataMotivo('acabados')
+    dataSA = setarDataMotivo('semi-acabados')
     
-    # Limpa as tabelas antes de inserir novos itens    
     tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
     tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())
     
-    # Inserir motivos acabados
-    for x in motivosAcabados:
-        if x['tipoMov'] == 'subtracao':
-            id = x['pkProduto']
-            descricao = x['descricao']
-            motivo = x['motivo']
-            quemSolicitou = x['solicitante']
-            subtracao = x['saldo']
-            data_formatada = datetime.strptime(x['dataMov'], "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S")
-            data = (id, descricao, motivo, quemSolicitou, subtracao, data_formatada)
-            tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
-
-    # Inserir motivos semi-acabados
-    for y in motivosSemiAcabados:
-        if y['tipoMov'] == 'subtracao':
-            id = y['idxProduto']
-            descricao = y['descricao']
-            motivo = y['motivo']
-            quemSolicitou = y['solicitante']
-            subtracao = y['saldo']
-            data_formatada = datetime.strptime(y['dataMov'], "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S")
-            data = (id, descricao, motivo, quemSolicitou, subtracao, data_formatada)
-            tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
-     
+    if data is None and dataSA is None:
+        messagebox.showerror('Período inválido.', 
+                             'Por favor, verifique se os campos da data estão corretos.')
+        return
+    if not data and not dataSA:
+        messagebox.showinfo('Não há alterações.', 
+                             'Não há alterações neste período de tempo.')
+        return
+    else:
+        # Inserir motivos acabados
+        if data is not None:
+            for x in data:
+                horaData = x['dataMov']
+                horaDataObj = datetime.strptime(horaData, "%Y-%m-%d %H:%M:%S")
+                horaDataFormatada = horaDataObj.strftime("%d/%m/%Y, %H:%M:%S")
+                if x['tipoMov'] == 'subtracao':
+                    id = x['pkProduto']
+                    descricao = x['descricao']
+                    motivo = x['motivo']
+                    quemSolicitou = x['solicitante']
+                    subtracao = x['saldo']
+                    data = (id, descricao, motivo, quemSolicitou, subtracao, horaDataFormatada)
+                    tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
+    
+        # Inserir motivos semi-acabados
+        if dataSA is not None:
+            for y in dataSA:
+                horaData = y['dataMov']
+                horaDataObj = datetime.strptime(horaData, "%Y-%m-%d %H:%M:%S")
+                horaDataFormatada = horaDataObj.strftime("%d/%m/%Y, %H:%M:%S")
+                if y['tipoMov'] == 'subtracao':
+                    id = y['idxProduto']
+                    descricao = y['descricao']
+                    motivo = y['motivo']
+                    quemSolicitou = y['solicitante']
+                    subtracao = y['saldo']
+                    data = (id, descricao, motivo, quemSolicitou, subtracao, horaDataFormatada)
+                    tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
+                    
 def inserirTabelaControle():
     global prod_estoque
     controleEstoque = controleEstoqueService.EstoqueService()
@@ -491,13 +522,16 @@ def janelaAttEstoque(_tbl, tp_controle, tp_att):
         btn_add.grid(row=7, sticky='nsew', padx=(40, 0), pady=(0,20))
 
 def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
+    horaData_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    horaData = datetime.strptime(horaData_str, '%Y-%m-%d %H:%M:%S')
+    
     if tp_controle == 'acabados':
         novo_produto = {
             "pkProduto": produto[0],
             "descricao": produto[1],
             "saldo": att_saldo,
             "unidade": produto[2],
-            "dataMov": recuperarHoraAtual(),
+            "dataMov": horaData,
             "tipoMov": tp_att,
             "motivo": motivo,
             "solicitante": solicitante
@@ -529,7 +563,7 @@ def attSaldo(produto, att_saldo, tp_controle, tp_att, motivo, solicitante):
             "descricao":produto[1],
             "saldo":att_saldo,
             "unidade": produto[3],
-            "dataMov": recuperarHoraAtual(),
+            "dataMov": horaData,
             "tipoMov": tp_att,
             "motivo": motivo,
             "solicitante": solicitante
@@ -587,39 +621,45 @@ def filtrarListas(event, tipo_tabela):
             data_sa = (id, produto, saldo, un)
             tabelas.tbl_ctrl_semi.insert(parent='', index=0, values=data_sa)
             
-    # elif tipo_tabela == 'motivosAcabados':
-    #     text = input_motivo.get() 
-    #     _motivos = motivosAcabados 
-    #     motivos_filtrados = list(filter(lambda motivo: text.lower() in motivo['descricao'].lower(), _motivos))
-    #     tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
-    #     for motivoA in motivos_filtrados:
-    #         if(motivoA['tipoMov'] == "subtracao"):
-    #             id = motivoA['pkProduto']
-    #             descricao = motivoA['descricao']
-    #             motivo = motivoA['motivo']
-    #             quemSolicitou = motivoA['solicitante']
-    #             subtracao = motivoA['saldo']
-    #             data = motivoA['dataMov']
-    #             data = (id, descricao, motivo, quemSolicitou, subtracao, 
-    #                         datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-    #             tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
+    elif tipo_tabela == 'motivosAcabados':
+        text = input_motivo.get() 
+        _motivos = motivosAcabados 
+        motivos_filtrados = list(filter(lambda motivo: text.lower() in motivo['descricao'].lower(), _motivos))
+        tabelas.tbl_motivo_acabados.delete(*tabelas.tbl_motivo_acabados.get_children())
+        for motivoA in motivos_filtrados:
+            if(motivoA['tipoMov'] == "subtracao"):
+                id = motivoA['pkProduto']
+                descricao = motivoA['descricao']
+                motivo = motivoA['motivo']
+                quemSolicitou = motivoA['solicitante']
+                subtracao = motivoA['saldo']
+                
+                horaData = motivoA['dataMov']
+                horaDataObj = datetime.strptime(horaData, "%Y-%m-%d %H:%M:%S")
+                horaDataFormatada = horaDataObj.strftime("%d/%m/%Y, %H:%M:%S")
+                
+                data = (id, descricao, motivo, quemSolicitou, subtracao, horaDataFormatada)
+                tabelas.tbl_motivo_acabados.insert(parent='', index=0, values=data)
             
-    # elif tipo_tabela == 'motivosSemiAcabados':
-    #     text = input_motivoSA.get()  
-    #     _semiacabados = motivosSemiAcabados 
-    #     semiacabados_filtrados = list(filter(lambda motivoSA: text.lower() in motivoSA['descricao'].lower(), _semiacabados))
-    #     tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())  
-    #     for motivoSA in semiacabados_filtrados: 
-    #         if(motivoSA['tipoMov'] == "subtracao"):
-    #             id = motivoSA['idxProduto']
-    #             descricao = motivoSA['descricao']
-    #             motivo = motivoSA['motivo']
-    #             quemSolicitou = motivoSA['solicitante']
-    #             subtracao = motivoSA['saldo']
-    #             data = motivoSA['dataMov']
-    #             data = (id, descricao, motivo, quemSolicitou, subtracao, 
-    #                     datetime.strptime(data, "%Y-%m-%d_%H-%M-%S").strftime("%d/%m/%Y %H:%M:%S"))
-    #             tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
+    elif tipo_tabela == 'motivosSemiAcabados':
+        text = input_motivoSA.get()  
+        _semiacabados = motivosSemiAcabados 
+        semiacabados_filtrados = list(filter(lambda motivoSA: text.lower() in motivoSA['descricao'].lower(), _semiacabados))
+        tabelas.tbl_motivo_semi_acabados.delete(*tabelas.tbl_motivo_semi_acabados.get_children())  
+        for motivoSA in semiacabados_filtrados: 
+            if(motivoSA['tipoMov'] == "subtracao"):
+                id = motivoSA['idxProduto']
+                descricao = motivoSA['descricao']
+                motivo = motivoSA['motivo']
+                quemSolicitou = motivoSA['solicitante']
+                subtracao = motivoSA['saldo']
+                
+                horaData = motivoSA['dataMov']
+                horaDataObj = datetime.strptime(horaData, "%Y-%m-%d %H:%M:%S")
+                horaDataFormatada = horaDataObj.strftime("%d/%m/%Y, %H:%M:%S")
+                
+                data = (id, descricao, motivo, quemSolicitou, subtracao, horaDataFormatada)
+                tabelas.tbl_motivo_semi_acabados.insert(parent='', index=0, values=data)
 
 #O código abaixo cria a interface que usamos para testar nosso script.
 
@@ -800,14 +840,28 @@ notebook.add(page4, text='| Motivos de estoque |')
 lbl_dtInicioMotivos = Label(page4, text="De:", font=("Arial", 14))
 lbl_dtInicioMotivos.grid(row=1, padx=(0, 190), column=0, sticky="e")
 
-dtInicioMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtInicioMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/MM/yyyy')
 dtInicioMotivos.grid(row=2, column=0, padx=(150, 0), pady=5, sticky="e")
 
 lbl_dtFimMotivos = Label(page4, text="Até:", font=("Arial", 14))
 lbl_dtFimMotivos.grid(row=1, column=1, padx=(50, 0), pady=5, sticky="w")
 
-dtFimMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+dtFimMotivos = DateEntry(page4, font=('Arial', 12), width=22, height=20, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/MM/yyyy')
 dtFimMotivos.grid(row=2, column=1, padx=(50, 0), pady=5, sticky="w")
+
+btn_obter_data = Button(page4, text="Filtrar lista", bg='#C0C0C0', font=("Arial", 16), command=inserirTabelaMotivos)
+btn_obter_data.grid(row=4, column=0, columnspan=2, padx=(80, 0), pady=2, sticky='nsew')
+
+
+
+
+input_motivo = Entry(page4, textvariable=saldo_var, bd=4)
+input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_motivo.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosAcabados'))
+
+input_motivoSA = Entry(page4, textvariable=saldo_var, bd=4)
+input_motivoSA.grid(row=15, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
+input_motivoSA.bind("<KeyRelease>", lambda event: filtrarListas(event, 'motivosSemiAcabados'))
 
 # input_motivo = Entry(page4, textvariable=saldo_var, bd=4)
 # input_motivo.grid(row=10, column=0, columnspan=2, padx=(80, 0), pady=(10, 30), sticky='nsew')
@@ -824,7 +878,7 @@ tabelas.tabelaCtrlSemiacabados(page3)  # Adiciona tabela de controle de semiacab
 tabelas.tabelaMotivo(page4)  # Adiciona tabela de motivo na página 4
 tabelas.tabelaMotivoSA(page4)  # Adiciona tabela de motivo SA na página 4
 inserirTabelaControle() 
-inserirTabelaMotivos()
+#inserirTabelaMotivos()
 root.mainloop()  
 
 
