@@ -112,7 +112,11 @@ def setarDataMotivo(tipo):
     # Convertendo as strings para objetos datetime
     formato = '%d/%m/%Y'
     dataInicio = datetime.strptime(dataInicioStr, formato)
-    dataFim = datetime.strptime(dataFimStr, formato)
+    dataFim = datetime.strptime(dataFimStr, formato).replace(hour=23, minute=59)
+    
+    print (dataInicio)
+    print (dataFim) 
+    
     if(dataInicio < dataFim):
         if(tipo == 'acabados'):
             estoqueCompleto = db_ctrl_estoque.getEstoqueDT(dataInicio, dataFim)
