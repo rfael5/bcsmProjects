@@ -231,6 +231,10 @@ def tabelaMotivo(frame):
     tbl_motivo_acabados.column('Data e hora', width=150, anchor=CENTER)
     
     tbl_motivo_acabados.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_motivo_acabados))
+
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tbl_motivo_acabados.yview)
+    tbl_motivo_acabados.configure(yscrollcommand=scrollbar.set)
+    scrollbar.grid(row=12, column=3, sticky='ns') 
     
     
 def tabelaMotivoSA(frame):
@@ -259,6 +263,10 @@ def tabelaMotivoSA(frame):
     tbl_motivo_semi_acabados.column('Data e hora', width=150, anchor=CENTER)
     
     tbl_motivo_semi_acabados.bind('<ButtonRelease>', lambda event: armazenarInfoProduto(event, tbl_motivo_semi_acabados))
+    
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tbl_motivo_semi_acabados.yview)
+    tbl_motivo_semi_acabados.configure(yscrollcommand=scrollbar.set)
+    scrollbar.grid(row=16, column=3, sticky='ns') 
 
 def armazenarInfoProduto(event, _tblControle):
     #global dados_produto
