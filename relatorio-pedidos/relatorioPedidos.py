@@ -14,16 +14,16 @@ import criacao_planilha
 import db_ctrl_estoque
 import controleEstoqueService
 
-# db_ctrl_estoque.excluirTabela('ctrl_estoque')
-# db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
+db_ctrl_estoque.excluirTabela('ctrl_estoque')
+db_ctrl_estoque.excluirTabela('ctrl_semi_acabados')
 # # controleEstoque = controleEstoqueService.EstoqueService()
 # # controleEstoque.formatarProdutosControle()
-# db_ctrl_estoque.criar_tabela()
-# db_ctrl_estoque.criarTblControleSA()
-# db_ctrl_estoque.add_produto()
-# db_ctrl_estoque.add_sa()
-# db_ctrl_estoque.getEstoqueCompleto()
-# db_ctrl_estoque.getEstoqueSA()
+db_ctrl_estoque.criar_tabela()
+db_ctrl_estoque.criarTblControleSA()
+db_ctrl_estoque.add_produto()
+db_ctrl_estoque.add_sa()
+db_ctrl_estoque.getEstoqueCompleto()
+db_ctrl_estoque.getEstoqueSA()
 
 #Retornam as datas para um formato legivel
 def formatarData(data):
