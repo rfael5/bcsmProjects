@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import CadastrarHoras from "./CadastrarHoras";
+import HorasFuncionario from "./HorasFuncionario";
+
+export const FContext = createContext({})
 
 function TabelaFuncionarios() {
 
@@ -15,14 +18,12 @@ function TabelaFuncionarios() {
 
     const buscarFuncionarios = async () => {
         await window.api.testInvoke().then((result) => {
-            console.log(result)
             setFuncionarios(result)
             setFiltroFuncionarios(result)
         })
     }
 
     const setSelectedField = (value) => {
-        console.log(value)
         if (value !== 'Todos'){
             let listaFiltrada = funcionarios.filter((func) => func.setor === value)
             setFiltroFuncionarios(listaFiltrada)
@@ -34,8 +35,9 @@ function TabelaFuncionarios() {
 
     const administrarHoras = (value) => {
         setDadosFuncionario(value)
-        console.log(value)
     }
+
+    const [attHorasMes, setAttHorasMes] = useState({})
 
     return (
         <div>
@@ -45,32 +47,45 @@ function TabelaFuncionarios() {
                     <option key={setor} value={setor}>{setor}</option>
                 ))}
             </select>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Setor</th>
-                        <th>Data de Admissão</th>
-                        <th>Administrar Horas</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtroFuncionarios.map((func) => (
-                        <tr key={func.id}>
-                            <td>{func.nomeFuncionario}</td>
-                            <td>{func.setor}</td>
-                            <td>{func.dataAdmissao}</td>
-                            <td>
-                                <button onClick={() => administrarHoras(func)}>Ver horas</button>
-                            </td>
+            <div className="d-flex justify-content-center mt-4">
+                <table className="table  table-striped table-hover ">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '150px' }}>Nome</th>
+                            <th style={{width: '150px'}}>Setor</th>
+                            <th style={{width: '150px'}}>Data de Admissão</th>
+                            <th>Administrar Horas</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <div>
-                <CadastrarHoras funcionario={dadosFuncionario} />
+                    </thead>
+                    <tbody>
+                        {
+                        filtroFuncionarios.map((func) => (
+                            <tr key={func.id}>
+                                <td style={{ width: '150px' }}>{func.nomeFuncionario}</td>
+                                <td style={{width: '150px'}}>{func.setor}</td>
+                                <td style={{width: '150px'}}>{func.dataAdmissao}</td>
+                                <td style={{width: '150px'}}>
+                                    <button className="btn btn-primary" onClick={() => administrarHoras(func)}>Adicionar horas</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
+            
+            <FContext.Provider value={{attHorasMes, setAttHorasMes}}>
+                <div className="row d-flex">
+                    <div className="col-8">
+                        <HorasFuncionario funcionario={dadosFuncionario} />
+                    </div>
+                    <div className="col-4">
+                        <CadastrarHoras funcionario={dadosFuncionario} />
+                    </div>
+                </div>
+            </FContext.Provider>
+
+            
+            
         </div>
     )
 }

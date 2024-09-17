@@ -1,0 +1,58 @@
+{
+  "name": "adm-horas",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "./",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "react-scripts": "^5.0.1"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-dom": "^18.3.1",
+    "react-input-mask": "^2.0.4",
+    "react-router-dom": "^6.26.0",
+    "sqlite3": "5.1.1",
+    "web-vitals": "^4.2.3",
+    "xlsx": "^0.18.5"
+  },
+  "main": "src/electron-starter.js",
+  "scripts": {
+    "start": "cross-env BROWSER=none react-scripts start",
+    "build": "react-scripts build && electron-builder",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "electron": "electron .",
+    "dev": "concurrently \"yarn start\" \"yarn electron-dev\"",
+    "electron-dev": "cross-env ELECTRON_START_URL=http://localhost:3000 electron ."
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "appId": "com.adm-horas.myapp",
+    "files": [
+      "build/**/*",
+      "src/electron-starter.js",
+      "src/preload.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "extends": null
+  }
+}
